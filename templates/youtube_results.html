@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AB6 AI - Analysis Results</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; }
+  .container { max-width: 800px; margin: 0 auto; padding: 32px 24px; }
+  .header { text-align: center; margin-bottom: 32px; }
+  .header h1 { font-size: 28px; color: #f8fafc; margin-bottom: 8px; }
+  .header .subtitle { color: #94a3b8; font-size: 14px; }
+  .card { background: #1e293b; border-radius: 12px; padding: 24px; margin-bottom: 20px; }
+  .card h2 { font-size: 18px; color: #f8fafc; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .engagement-ring { display: flex; align-items: center; justify-content: center; gap: 24px; margin-bottom: 16px; flex-wrap: wrap; }
+  .ring { width: 100px; height: 100px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; position: relative; }
+  .ring-inner { text-align: center; }
+  .ring-inner .val { font-size: 28px; font-weight: 700; color: #f8fafc; }
+  .ring-inner .lbl { font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+  .ring.high { background: conic-gradient(#22c55e var(--pct), #1e293b var(--pct)); }
+  .ring.medium { background: conic-gradient(#eab308 var(--pct), #1e293b var(--pct)); }
+  .ring.low { background: conic-gradient(#ef4444 var(--pct), #1e293b var(--pct)); }
+  .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .stat-box { background: #0f172a; border-radius: 8px; padding: 16px; text-align: center; }
+  .stat-box .num { font-size: 24px; font-weight: 700; color: #f8fafc; }
+  .stat-box .lbl { font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+  .severity-badge { display: inline-flex; padding: 4px 14px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+  .severity-badge.none { background: #064e3b; color: #6ee7b7; }
+  .severity-badge.low { background: #1e3a5f; color: #93c5fd; }
+  .severity-badge.medium { background: #713f12; color: #fde047; }
+  .severity-badge.high { background: #7f1d1d; color: #fca5a5; }
+  .rec-item { background: #0f172a; border-left: 3px solid #3b82f6; padding: 14px 16px; border-radius: 0 8px 8px 0; margin-bottom: 10px; font-size: 14px; line-height: 1.5; color: #e2e8f0; }
+  .rec-item strong { color: #60a5fa; }
+  .section-map { display: flex; height: 40px; border-radius: 8px; overflow: hidden; margin-bottom: 20px; }
+  .section-map .seg { flex: 1; transition: all 0.2s; position: relative; cursor: pointer; }
+  .section-map .seg:hover { transform: scaleY(1.3); }
+  .tooltip { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: #0f172a; color: #e2e8f0; padding: 4px 8px; border-radius: 4px; font-size: 10px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+  .section-map .seg:hover .tooltip { opacity: 1; }
+  .narrative-box { background: #0f172a; border-radius: 8px; padding: 16px; font-size: 14px; line-height: 1.6; color: #cbd5e1; border-left: 3px solid #3b82f6; }
+  .actions { display: flex; gap: 12px; justify-content: center; margin-top: 24px; }
+  a.button { display: inline-flex; align-items: center; padding: 12px 24px; background: #3b82f6; color: white; text-decoration: none; border-radius: 8px; font-size: 14px; font-weight: 600; transition: background 0.2s; }
+  a.button:hover { background: #2563eb; }
+  a.button.secondary { background: #475569; }
+  a.button.secondary:hover { background: #64748b; }
+  .pipeline-bar { display: flex; gap: 6px; justify-content: center; margin-bottom: 24px; flex-wrap: wrap; }
+  .pipe-step { background: #064e3b; color: #6ee7b7; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 500; letter-spacing: 0.3px; }
+  .pipe-arrow { color: #334155; font-size: 12px; line-height: 24px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="pipeline-bar">
+    <span class="pipe-step">PRIOR INFO</span>
+    <span class="pipe-arrow">→</span>
+    <span class="pipe-step">OBSERVE</span>
+    <span class="pipe-arrow">→</span>
+    <span class="pipe-step">ANALYZE</span>
+    <span class="pipe-arrow">→</span>
+    <span class="pipe-step">INFERENCE</span>
+    <span class="pipe-arrow">→</span>
+    <span class="pipe-step">INTERPRET</span>
+    <span class="pipe-arrow">→</span>
+    <span class="pipe-step">INTELLIGENCE</span>
+    <span class="pipe-arrow">→</span>
+    <span class="pipe-step">FEEDBACK</span>
+  </div>
+
+  <div class="header">
+    <h1>Analysis Complete</h1>
+    <p class="subtitle">{{ user_id }} · {{ video_id }}</p>
+  </div>
+
+  <div class="card">
+    <h2>Engagement & Overview</h2>
+    <div class="engagement-ring">
+      <div class="ring {{ engagement_class }}" style="--pct: {{ engagement_pct }}%">
+        <div class="ring-inner">
+          <div class="val">{{ engagement_score }}</div>
+          <div class="lbl">Engagement</div>
+        </div>
+      </div>
+      <div style="text-align:center;">
+        <div><span class="severity-badge {{ severity }}">{{ severity_label }}</span></div>
+        <div style="margin-top:8px; font-size:13px; color:#94a3b8;">Struggle Severity</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Session Statistics</h2>
+    <div class="stats-row">
+      <div class="stat-box"><div class="num">{{ total_events }}</div><div class="lbl">Events</div></div>
+      <div class="stat-box"><div class="num">{{ segment_count }}</div><div class="lbl">Segments</div></div>
+      <div class="stat-box"><div class="num">{{ struggle_count }}</div><div class="lbl">Struggle Areas</div></div>
+      <div class="stat-box"><div class="num">{{ total_pauses }}</div><div class="lbl">Pauses</div></div>
+      <div class="stat-box"><div class="num">{{ total_rewatches }}</div><div class="lbl">Rewatches</div></div>
+      <div class="stat-box"><div class="num">{{ avg_speed }}x</div><div class="lbl">Avg Speed</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Video Section Map</h2>
+    <p style="font-size:13px; color:#94a3b8; margin-bottom:12px;">
+      Green = easy · Yellow = moderate · Red = struggle · Dark = skipped
+    </p>
+    <div class="section-map">
+      {% for seg in segments %}
+      <div class="seg" style="background: {{ seg.color }};">
+        <div class="tooltip">{{ seg.label }} · score: {{ seg.score }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Recommendations</h2>
+    {% if recommendations %}
+      {% for rec in recommendations %}
+      <div class="rec-item">{{ rec | safe }}</div>
+      {% endfor %}
+    {% else %}
+      <div class="rec-item" style="border-left-color:#22c55e;">
+        <strong>Great work!</strong> No revision needed based on your watching patterns.
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <h2>Narrative Summary</h2>
+    <div class="narrative-box">{{ narrative }}</div>
+  </div>
+
+  <div class="actions">
+    <a href="/" class="button">Start New Session</a>
+    <a href="/watch" class="button secondary">Watch Another Video</a>
+  </div>
+</div>
+</body>
+</html>

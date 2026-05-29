@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AB6 AI - Watch Video</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; }
+  .container { max-width: 960px; margin: 0 auto; padding: 24px; }
+  .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+  .header h1 { font-size: 20px; color: #f8fafc; }
+  .user-badge { background: #1e293b; padding: 6px 14px; border-radius: 20px; font-size: 13px; color: #93c5fd; }
+  .card { background: #1e293b; border-radius: 12px; padding: 24px; margin-bottom: 20px; }
+  .url-input-row { display: flex; gap: 12px; }
+  .url-input-row input { flex: 1; padding: 12px 16px; background: #0f172a; border: 1px solid #334155; border-radius: 8px; color: #e2e8f0; font-size: 14px; outline: none; }
+  .url-input-row input:focus { border-color: #3b82f6; }
+  .url-input-row input:disabled { opacity: 0.5; }
+  button { padding: 12px 24px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s; white-space: nowrap; }
+  button:hover { background: #2563eb; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  button.danger { background: #dc2626; }
+  button.danger:hover { background: #b91c1c; }
+  button.secondary { background: #475569; }
+  button.secondary:hover { background: #64748b; }
+  .player-wrapper { position: relative; width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 8px; overflow: hidden; margin-bottom: 20px; }
+  .player-wrapper.hidden { display: none; }
+  #player { width: 100%; height: 100%; }
+  .placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #475569; gap: 12px; }
+  .placeholder svg { width: 64px; height: 64px; opacity: 0.3; }
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .stat { background: #0f172a; border-radius: 8px; padding: 12px; text-align: center; }
+  .stat .value { font-size: 22px; font-weight: 700; color: #f8fafc; }
+  .stat .label { font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+  .event-log { background: #0f172a; border-radius: 8px; padding: 12px; max-height: 200px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 11px; }
+  .event-log .entry { padding: 3px 0; border-bottom: 1px solid #1e293b; color: #94a3b8; }
+  .event-log .entry:last-child { border-bottom: none; }
+  .event-log .highlight { color: #6ee7b7; }
+  .event-log .warn { color: #fbbf24; }
+  .actions { display: flex; gap: 12px; justify-content: center; margin-top: 16px; }
+  .hidden { display: none !important; }
+  .pipeline-bar { display: flex; gap: 6px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .pipe-step { background: #1e293b; color: #475569; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 500; letter-spacing: 0.3px; }
+  .pipe-step.active { background: #1e3a5f; color: #60a5fa; }
+  .pipe-step.done { background: #064e3b; color: #6ee7b7; }
+  .pipe-arrow { color: #334155; font-size: 12px; line-height: 24px; }
+  .status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 500; }
+  .status-badge.watching { background: #1e3a5f; color: #60a5fa; }
+  .status-badge.done { background: #064e3b; color: #6ee7b7; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>AB6 AI · Video Learning Session</h1>
+    <span class="user-badge">👤 {{ user_id }}</span>
+  </div>
+
+  <div class="pipeline-bar" id="pipelineBar">
+    <span class="pipe-step">PRIOR INFO</span>
+    <span class="pipe-arrow">→</span>
+    <span class="pipe-step">OBSERVE</span>
+    <span class="pipe-arrow">→</span>
+    <span class="pipe-step">ANALYZE</span>
+    <span class="pipe-arrow">→</span>
+    <span class="pipe-step">INFERENCE</span>
+    <span class="pipe-arrow">→</span>
+    <span class="pipe-step">INTERPRET</span>
+    <span class="pipe-arrow">→</span>
+    <span class="pipe-step">INTELLIGENCE</span>
+    <span class="pipe-arrow">→</span>
+    <span class="pipe-step">FEEDBACK</span>
+  </div>
+
+  <div class="card" id="urlCard">
+    <label style="display:block; font-size:13px; font-weight:500; color:#cbd5e1; margin-bottom:8px;">Enter YouTube Video URL</label>
+    <div class="url-input-row">
+      <input type="text" id="youtubeUrl" placeholder="https://www.youtube.com/watch?v=..." value="{{ video_url or '' }}">
+      <button id="loadBtn" onclick="loadVideo()">Load Video</button>
+    </div>
+  </div>
+
+  <div class="player-wrapper hidden" id="playerWrapper">
+    <div id="player"></div>
+    <div class="placeholder" id="playerPlaceholder">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      <span>Enter a YouTube URL and click Load Video</span>
+    </div>
+  </div>
+
+  <div class="stats-grid" id="statsGrid">
+    <div class="stat"><div class="value" id="statTime">0:00</div><div class="label">Current Time</div></div>
+    <div class="stat"><div class="value" id="statDuration">0:00</div><div class="label">Duration</div></div>
+    <div class="stat"><div class="value" id="statSpeed">1.0x</div><div class="label">Speed</div></div>
+    <div class="stat"><div class="value" id="statEvents">0</div><div class="label">Events Tracked</div></div>
+    <div class="stat"><div class="value" id="statStatus">⏸</div><div class="label">Status</div></div>
+  </div>
+
+  <div class="actions">
+    <button id="finishBtn" class="danger hidden" onclick="finishSession()">Finish Video & Analyze</button>
+  </div>
+
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+      <span style="font-size:14px; font-weight:500;">Event Log</span>
+      <span class="status-badge watching" id="sessionStatus">🟢 Watching</span>
+    </div>
+    <div class="event-log" id="eventLog">
+      <div class="entry">Waiting for video to load...</div>
+    </div>
+  </div>
+</div>
+
+<script>
+let player = null;
+let sessionId = '{{ session_id }}';
+let userId = '{{ user_id }}';
+let eventCount = 0;
+let isPlaying = false;
+let lastVideoTime = 0;
+let batchTimer = null;
+
+function logEvent(type, detail) {
+  const log = document.getElementById('eventLog');
+  const entry = document.createElement('div');
+  const time = new Date().toLocaleTimeString();
+  entry.className = 'entry' + (type === 'tracked' ? ' highlight' : '');
+  entry.textContent = `[${time}] ${detail}`;
+  log.appendChild(entry);
+  log.scrollTop = log.scrollHeight;
+}
+
+function logWarn(detail) {
+  const log = document.getElementById('eventLog');
+  const entry = document.createElement('div');
+  const time = new Date().toLocaleTimeString();
+  entry.className = 'entry warn';
+  entry.textContent = `[${time}] ${detail}`;
+  log.appendChild(entry);
+  log.scrollTop = log.scrollHeight;
+}
+
+function updateStat(id, value) {
+  document.getElementById(id).textContent = value;
+}
+
+function extractVideoId(url) {
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
+    /^([a-zA-Z0-9_-]{11})$/,
+  ];
+  for (const p of patterns) {
+    const m = url.match(p);
+    if (m) return m[1];
+  }
+  return null;
+}
+
+function sendEvent(eventType, videoTime, extraData) {
+  eventCount++;
+  updateStat('statEvents', eventCount);
+  const payload = {
+    event_type: eventType,
+    timestamp: Date.now() / 1000,
+    video_time: Math.round(videoTime * 10) / 10,
+    data: extraData || {},
+  };
+  fetch('/api/event', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ session_id: sessionId, event: payload }),
+  }).catch(() => {});
+  logEvent('tracked', `${eventType} @ ${Math.round(videoTime)}s` + (extraData ? ' ' + JSON.stringify(extraData) : ''));
+}
+
+function sendBatchEvent(eventType, videoTime, extraData) {
+  if (batchTimer) clearTimeout(batchTimer);
+  batchTimer = setTimeout(() => {
+    sendEvent(eventType, videoTime, extraData);
+  }, 300);
+}
+
+function loadVideo() {
+  const url = document.getElementById('youtubeUrl').value.trim();
+  const videoId = extractVideoId(url);
+  if (!videoId) {
+    logWarn('Invalid YouTube URL');
+    return;
+  }
+
+  document.getElementById('loadBtn').disabled = true;
+  document.getElementById('youtubeUrl').disabled = true;
+  document.getElementById('playerWrapper').classList.remove('hidden');
+  document.getElementById('finishBtn').classList.remove('hidden');
+
+  fetch('/api/start', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ session_id: sessionId, video_url: url, video_id: videoId }),
+  }).then(r => r.json()).then(data => {
+    logEvent('system', 'Session started: ' + videoId);
+  });
+
+  if (typeof YT !== 'undefined' && YT.Player) {
+    createPlayer(videoId);
+  } else {
+    window.onYouTubeIframeAPIReady = () => createPlayer(videoId);
+  }
+}
+
+function createPlayer(videoId) {
+  document.getElementById('playerPlaceholder').style.display = 'none';
+  player = new YT.Player('player', {
+    height: '100%',
+    width: '100%',
+    videoId: videoId,
+    playerlets: { autoplay: 0, rel: 0, modestbranding: 1 },
+    events: {
+      onReady: onPlayerReady,
+      onStateChange: onPlayerStateChange,
+      onError: onPlayerError,
+    },
+  });
+}
+
+function onPlayerReady(event) {
+  const dur = player.getDuration();
+  updateStat('statDuration', formatTime(dur));
+
+  sendEvent('video_metadata', 0, { duration: dur, video_id: player.getVideoData().video_id });
+  logEvent('system', 'Player ready - duration: ' + formatTime(dur));
+  document.getElementById('loadBtn').disabled = false;
+}
+
+function onPlayerStateChange(event) {
+  const time = player.getCurrentTime();
+  const stateNames = { '-1': 'unstarted', '0': 'ended', '1': 'playing', '2': 'paused', '3': 'buffering', '5': 'cued' };
+  const stateName = stateNames[event.data] || 'unknown';
+
+  updateStat('statStatus', stateName === 'playing' ? '▶' : stateName === 'paused' ? '⏸' : '⏹');
+
+  if (event.data === YT.PlayerState.PLAYING) {
+    if (lastVideoTime > 0 && Math.abs(time - lastVideoTime) > 1) {
+      sendEvent('seek', time, { from: Math.round(lastVideoTime * 10) / 10, to: Math.round(time * 10) / 10 });
+    }
+    sendEvent('play', time, {});
+    isPlaying = true;
+    startTimeTracking();
+  } else if (event.data === YT.PlayerState.PAUSED) {
+    sendEvent('pause', time, {});
+    isPlaying = false;
+    lastVideoTime = time;
+  } else if (event.data === YT.PlayerState.ENDED) {
+    sendEvent('video_end', time, {});
+    isPlaying = false;
+    logEvent('system', 'Video ended');
+    setTimeout(finishSession, 1000);
+  } else if (event.data === YT.PlayerState.BUFFERING) {
+    sendEvent('buffering', time, {});
+  }
+}
+
+function onPlayerError(event) {
+  logWarn('Player error: ' + event.data);
+}
+
+function startTimeTracking() {
+  if (!isPlaying) return;
+  const time = player.getCurrentTime();
+  updateStat('statTime', formatTime(time));
+  sendBatchEvent('timeupdate', time, {});
+  setTimeout(startTimeTracking, 2000);
+}
+
+function formatTime(seconds) {
+  if (!seconds || isNaN(seconds)) return '0:00';
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return m + ':' + (s < 10 ? '0' : '') + s;
+}
+
+let tabSwitchCount = 0;
+document.addEventListener('visibilitychange', () => {
+  if (!player) return;
+  const time = player.getCurrentTime();
+  if (document.hidden) {
+    tabSwitchCount++;
+    sendEvent('tab_switch', time, { hidden: true, count: tabSwitchCount });
+    logWarn('Tab switched away');
+  } else {
+    sendEvent('tab_switch', time, { hidden: false, count: tabSwitchCount });
+    logEvent('system', 'Tab returned to video');
+  }
+});
+
+function finishSession() {
+  if (player) {
+    try { player.pauseVideo(); } catch(e) {}
+  }
+  isPlaying = false;
+  document.getElementById('finishBtn').disabled = true;
+  document.getElementById('finishBtn').textContent = 'Analyzing...';
+  document.getElementById('sessionStatus').textContent = '⏳ Analyzing';
+  document.getElementById('sessionStatus').className = 'status-badge';
+  updatePipelineProgress('all');
+
+  fetch('/api/finish', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ session_id: sessionId }),
+  }).then(r => {
+    if (r.redirected) { window.location.href = r.url; }
+    else { window.location.href = '/results?session_id=' + sessionId; }
+  }).catch(() => {
+    window.location.href = '/results?session_id=' + sessionId;
+  });
+}
+
+function updatePipelineProgress(doneStep) {
+  const steps = document.querySelectorAll('.pipe-step');
+  const stepNames = ['prior info', 'observe', 'analyze', 'inference', 'interpret', 'intelligence', 'feedback'];
+  let found = false;
+  steps.forEach((el, i) => {
+    if (stepNames[i] === doneStep || found) {
+      el.classList.add('done');
+      found = true;
+    }
+  });
+}
+</script>
+<script src="https://www.youtube.com/iframe_api"></script>
+</body>
+</html>
