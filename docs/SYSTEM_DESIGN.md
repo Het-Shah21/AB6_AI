@@ -589,7 +589,7 @@ mindmap
       demo still runs offline
       rate_limiter
     State is drained
-      raw_events := []
+      "raw_events assigned empty list"
       after observe_node
     Cool down
       last_cycle_timestamp

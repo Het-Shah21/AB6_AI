@@ -841,12 +841,12 @@ Plus two top-level documents:
 
 ```mermaid
 flowchart TB
-    U([New reader]) --> R1[docs/README.md<br>(this file)]
-    R1 --> R2[docs/SYSTEM_DESIGN.md<br>(one-picture view)]
-    R2 --> R3[Run a demo<br>(demo.py / interactive_demo.py)]
-    R3 --> R4[Read each phase in order:<br>00-system-design.md first,<br>then 01-*.md]
-    R4 --> R5[Re-read SYSTEM_DESIGN.md<br>now with code in head]
-    R5 --> R6[Use reference index<br>as needed]
+    U([New reader]) --> R1["docs/README.md<br>(this file)"]
+    R1 --> R2["docs/SYSTEM_DESIGN.md<br>(one-picture view)"]
+    R2 --> R3["Run a demo<br>(demo.py / interactive_demo.py)"]
+    R3 --> R4["Read each phase in order:<br>00-system-design.md first,<br>then 01-*.md"]
+    R4 --> R5["Re-read SYSTEM_DESIGN.md<br>now with code in head"]
+    R5 --> R6["Use reference index<br>as needed"]
     style R1 fill:#fef3c7
     style R2 fill:#fef3c7
     style R4 fill:#dcfce7

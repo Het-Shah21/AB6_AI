@@ -143,8 +143,8 @@ erDiagram
         int avg_attempts
         jsonb common_gaps
     }
-    INTERVENTION_LOG ..> WISDOM_STORE : "feedback updates alpha/beta"
-    LEARNER_PROFILE ..> POPULATION_BENCHMARK : "compared against"
+    INTERVENTION_LOG ||--o{ WISDOM_STORE : "feedback updates alpha/beta"
+    LEARNER_PROFILE ||--o{ POPULATION_BENCHMARK : "compared against"
 ```
 
 ---
