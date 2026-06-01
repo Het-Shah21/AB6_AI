@@ -159,7 +159,7 @@ flowchart TB
     P3 --> P5
     P4 --> P5
     P5 --> P8[8 API Layer]
-    P5 --> P9[9 Testing & Demo]
+    P5 --> P9["9 Testing and Demo"]
     P6 --> P5
     P6 --> P7
     P7 --> P5
@@ -181,14 +181,14 @@ flowchart LR
     AG --> DEC[decide]:::n
     AG --> ACT[act]:::n
     AG --> PAU[pause]:::n
-    OBS --> EP["Phase 3 Pipeline<br/>(TelemetryAggregator)"]
-    ORI --> CG["Phase 4 Concept Graph<br/>(queries)"]
-    ORI --> MS["Phase 6 Memory<br/>(Personal + Global)"]
-    ORI --> LP["Phase 2 LLM<br/>(reasoning)"]
+    OBS --> EP["Phase 3 Pipeline<br>(TelemetryAggregator)"]
+    ORI --> CG["Phase 4 Concept Graph<br>(queries)"]
+    ORI --> MS["Phase 6 Memory<br>(Personal + Global)"]
+    ORI --> LP["Phase 2 LLM<br>(reasoning)"]
     DEC --> MS
     DEC --> SEL["Phase 7 Selector"]
-    ACT --> GEN["Phase 7 Generator<br/>(LLM primary)"]
-    ACT --> DEL["Phase 7 Delivery<br/>(WS / SSE)"]
+    ACT --> GEN["Phase 7 Generator<br>(LLM primary)"]
+    ACT --> DEL["Phase 7 Delivery<br>(WS / SSE)"]
     SEL --> MS
     EP --> PG[("PostgreSQL + pgvector")]
     CG --> PG
@@ -203,8 +203,8 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    OR["orient_node"] -->|"reasoning<br/>(GPT-4o)"| P["provider.py"]
-    AC["act_node"] -->|"reasoning<br/>(GPT-4o)"| P
+    OR["orient_node"] -->|"reasoning<br>(GPT-4o)"| P["provider.py"]
+    AC["act_node"] -->|"reasoning<br>(GPT-4o)"| P
     BD["concept_graph/builder.py"] -->|"reasoning + primary"| P
     GE["intervention/generator.py"] -->|"reasoning + primary"| P
     P -->|"fallback chain"| OA["OpenAI"] & AN["Anthropic"] & GG["Google GenAI"]
@@ -214,9 +214,9 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    OBS["observe"] --> CACHE["SessionCache<br/>(Redis 30 min)"]
-    ORI["orient"] --> PERS["PersonalMemoryService<br/>(LearnerProfile)"]
-    ORI --> GLOB["GlobalWisdomService<br/>(community insight)"]
+    OBS["observe"] --> CACHE["SessionCache<br>(Redis 30 min)"]
+    ORI["orient"] --> PERS["PersonalMemoryService<br>(LearnerProfile)"]
+    ORI --> GLOB["GlobalWisdomService<br>(community insight)"]
     DEC["decide"] --> GLOB
     ACT["act"] --> EFF["EffectivenessTracker"]
     EFF --> GLOB
@@ -230,7 +230,7 @@ flowchart LR
 
 ```mermaid
 flowchart TB
-    D["decide_node"] -->|"get_or_create wisdom<br/>for each (concept, type, segment)"| WR["WisdomRepo"]
+    D["decide_node"] -->|"get_or_create wisdom<br>for each (concept, type, segment)"| WR["WisdomRepo"]
     D -->|"select()"| SEL["InterventionSelector"]
     SEL -->|"candidate[]"| D
     D -->|"argmax beta sample"| WIN["selected_intervention"]
@@ -248,8 +248,8 @@ flowchart LR
     WS["WS /telemetry/ws"] --> RS2["ai:telemetry (stream)"]
     RS1 --> ARQ["ARQ worker"]
     RS2 --> ARQ
-    ARQ -->|"user:{id}:events<br/>(list, capped 100)"| OBS["observe_node reads<br/>state.raw_events"]
-    ARQ --> TA["TelemetryAggregator<br/>(30s/2m/5m windows)"]
+    ARQ -->|"user:{id}:events<br>(list, capped 100)"| OBS["observe_node reads<br>state.raw_events"]
+    ARQ --> TA["TelemetryAggregator<br>(30s/2m/5m windows)"]
     TA -->|"state.telemetry_window"| OBS
 ```
 
@@ -397,9 +397,9 @@ flowchart LR
         UV["Uvicorn"]
     end
     subgraph LLM["LLM Providers"]
-        OAI["OpenAI<br/>(gpt-4o-mini, gpt-4o, text-embedding-3-small)"]
-        ANT["Anthropic<br/>(claude-sonnet-4)"]
-        GG["Google GenAI<br/>(gemini-2.5-flash)"]
+        OAI["OpenAI<br>(gpt-4o-mini, gpt-4o, text-embedding-3-small)"]
+        ANT["Anthropic<br>(claude-sonnet-4)"]
+        GG["Google GenAI<br>(gemini-2.5-flash)"]
     end
     subgraph DATA["Storage"]
         PG["PostgreSQL 18 + pgvector"]
@@ -579,7 +579,7 @@ diagrams specific to that phase. Below is what each contains.
 
 ```mermaid
 mindmap
-  root((Invariants))
+  Invariants
     Loop terminates
       max_cycles
       continue_router
@@ -594,7 +594,7 @@ mindmap
     Cool down
       last_cycle_timestamp
       30 s default
-      decide_router → pause
+      decide_router to pause
     PII is scrubbed
       api middleware
       sanitizer before LLM

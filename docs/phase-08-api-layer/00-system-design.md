@@ -179,7 +179,7 @@ sequenceDiagram
     Browser->>WS: connect
     WS->>Mgr: connect_websocket(user_id, ws)
     Mgr->>Con: append ws to user's list
-    Note over ACT: On a later OODA cycle:<br/>intervention chosen
+    Note over ACT: On a later OODA cycle:<br>intervention chosen
     ACT->>Con: deliver_via_websocket(user_id, payload)
     Con->>WS: ws.send_json(payload) for every open socket
     WS-->>Browser: {intervention_id, type, content, ...}
@@ -201,8 +201,8 @@ pruned automatically.
 flowchart LR
     G1["GET /concepts/{id}"] --> R1["ConceptRepo.get()"]
     G2["GET /concepts/{id}/neighbors?depth=2"] --> R2["ConceptRepo.get_with_neighbors()"]
-    G3["GET /concepts/{id}/prerequisites"] --> R3["queries.get_prerequisite_chain()<br/>(recursive CTE)"]
-    G4["GET /concepts/search?query=..."] --> R4["generate_embedding()<br/>+ ConceptRepo.search_similar()<br/>(pgvector)"]
+    G3["GET /concepts/{id}/prerequisites"] --> R3["queries.get_prerequisite_chain()<br>(recursive CTE)"]
+    G4["GET /concepts/search?query=..."] --> R4["generate_embedding()<br>+ ConceptRepo.search_similar()<br>(pgvector)"]
 ```
 
 ---
@@ -234,8 +234,8 @@ via `Depends()`.
 
 ```mermaid
 flowchart TB
-    REQ["HTTP Request"] --> M1["CORS<br/>(allow all origins)"]
-    M1 --> M2["Request logging middleware<br/>(method, path, status, latency)"]
+    REQ["HTTP Request"] --> M1["CORS<br>(allow all origins)"]
+    M1 --> M2["Request logging middleware<br>(method, path, status, latency)"]
     M2 --> EH1{{"ValidationError?"}}
     EH1 -- Yes --> R1["422 JSON with field errors"]
     EH1 -- No --> EH2{{"AB6AIError?"}}
@@ -252,10 +252,10 @@ flowchart TB
 ```mermaid
 flowchart TB
     subgraph P8["src/api/"]
-        A["app.py<br/>(create_app + lifespan)"]
-        D["dependencies.py<br/>(get_stream_consumer, get_session_cache)"]
-        M["middleware/sanitizer.py<br/>(PII strip on inbound)"]
-        R["routers/<br/>events, telemetry, interventions, agent, concept_graph"]
+        A["app.py<br>(create_app + lifespan)"]
+        D["dependencies.py<br>(get_stream_consumer, get_session_cache)"]
+        M["middleware/sanitizer.py<br>(PII strip on inbound)"]
+        R["routers/<br>events, telemetry, interventions, agent, concept_graph"]
     end
     subgraph BACK["Backend resources"]
         REDIS[("Redis")]

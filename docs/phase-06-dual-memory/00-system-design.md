@@ -11,17 +11,17 @@ global wisdom (cross-user Thompson parameters).
 ```mermaid
 flowchart TB
     subgraph L0["L0 — Per-request (in process)"]
-        IC["in-memory dicts<br/>(TelemetryAggregator buffers)"]
+        IC["in-memory dicts<br>(TelemetryAggregator buffers)"]
     end
     subgraph L1["L1 — Session (Redis, TTL 30 min)"]
-        SC["SessionCache<br/>session:{id} → state dict"]
+        SC["SessionCache<br>session:{id} → state dict"]
     end
     subgraph L2["L2 — Personal (PostgreSQL, persistent)"]
-        LP[("ai_learner_profiles<br/>(mastery_map, learning_style,<br/>engagement_history, struggle_patterns)")]
+        LP[("ai_learner_profiles<br>(mastery_map, learning_style,<br>engagement_history, struggle_patterns)")]
     end
     subgraph L3["L3 — Global (PostgreSQL, cross-user)"]
-        WS[("ai_wisdom_store<br/>(alpha, beta per concept+type+segment)")]
-        PB[("ai_population_benchmarks<br/>(avg, p25, p75, common_gaps)")]
+        WS[("ai_wisdom_store<br>(alpha, beta per concept+type+segment)")]
+        PB[("ai_population_benchmarks<br>(avg, p25, p75, common_gaps)")]
     end
 
     IC -->|"obs_window"| OODA["OODA Agent"]
@@ -69,7 +69,7 @@ flowchart LR
     G1 --> WR["WisdomRepo"]
     G2 --> WR
     G3 --> WR
-    WR --> DB[("ai_wisdom_store<br/>(alpha, beta_param, total_trials, success_rate, insight_text)")]
+    WR --> DB[("ai_wisdom_store<br>(alpha, beta_param, total_trials, success_rate, insight_text)")]
     G2 -- "update_beta: alpha++ or beta++" --> DB
 ```
 
@@ -83,11 +83,11 @@ conclusions from a single noisy trial.
 
 ```mermaid
 flowchart TB
-    A["SessionCache (Redis)"] -->|set_state| RD["Redis<br/>session:{id}<br/>TTL 1800s"]
+    A["SessionCache (Redis)"] -->|set_state| RD["Redis<br>session:{id}<br>TTL 1800s"]
     B["InMemorySessionCache (fallback)"] -->|set| MEM["dict[str, dict]"]
     SC["SessionCache (interface)"] -.-> A
     SC -.-> B
-    DEC["Dependency injection<br/>based on settings.redis_url"] --> SC
+    DEC["Dependency injection<br>based on settings.redis_url"] --> SC
 ```
 
 Both implementations expose the same async API (`get`, `set`, `delete`,
@@ -116,7 +116,7 @@ sequenceDiagram
     EFF->>PMS: update_struggle_patterns(user_id, {effectiveness_*})
     EFF->>GWS: record_outcome(concept_id, type, segment, success)
     GWS->>WR: update_beta(wisdom_id, success)
-    WR->>WR: if success: alpha += 1<br/>else: beta_param += 1
+    WR->>WR: if success: alpha += 1<br>else: beta_param += 1
     DEC->>WR: get_or_create(concept_id, type, segment)  (next cycle)
     WR-->>DEC: {alpha, beta_param} (now updated)
 ```
@@ -131,7 +131,7 @@ that tomorrow's `decide` will sample from.
 ```mermaid
 flowchart LR
     A["learner mastery_map[concept_id] = 0.42"] --> C{"vs population"}
-    B["ai_population_benchmarks<br/>p25 = 0.55, p75 = 0.85"] --> C
+    B["ai_population_benchmarks<br>p25 = 0.55, p75 = 0.85"] --> C
     C -->|"0.42 < p25"| Z["struggling: below 75% of peers"]
     C -->|"p25 <= x <= p75"| N["normal range"]
     C -->|"x > p75"| G["ahead of peers"]
@@ -151,7 +151,7 @@ flowchart TB
     C --> D["pull all profiles with concept in mastery_map"]
     D --> E{"peer_count >= 3?"}
     E -- No --> SKIP["skip (insufficient data)"]
-    E -- Yes --> F["compute avg / median / p25 / p75<br/>+ common_gaps"]
+    E -- Yes --> F["compute avg / median / p25 / p75<br>+ common_gaps"]
     F --> G["UPSERT into ai_population_benchmarks"]
 ```
 
@@ -165,10 +165,10 @@ Individual learner rows are never joined with PII.
 ```mermaid
 flowchart LR
     subgraph P6["src/memory/"]
-        P["personal.py<br/>(PersonalMemoryService)"]
-        G["global_wisdom.py<br/>(GlobalWisdomService)"]
-        S["session_cache.py<br/>(SessionCache / InMemorySessionCache)"]
-        B["population_benchmarks.py<br/>(aggregator)"]
+        P["personal.py<br>(PersonalMemoryService)"]
+        G["global_wisdom.py<br>(GlobalWisdomService)"]
+        S["session_cache.py<br>(SessionCache / InMemorySessionCache)"]
+        B["population_benchmarks.py<br>(aggregator)"]
     end
     subgraph DB["db/repositories/"]
         LPR["LearnerProfileRepo"]

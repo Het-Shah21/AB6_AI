@@ -15,12 +15,12 @@ but never the other way around.
 flowchart TB
     subgraph L1["Configuration & Environment"]
         ENV[".env / .env.example"]
-        SET["src/config/settings.py<br/>Settings (BaseSettings)"]
-        LCFG["src/config/llm_config.py<br/>LLM_CONFIG dict"]
+        SET["src/config/settings.py<br>Settings (BaseSettings)"]
+        LCFG["src/config/llm_config.py<br>LLM_CONFIG dict"]
     end
 
     subgraph L2["Database Engine"]
-        ENG["src/db/engine.py<br/>AsyncEngine + SessionMaker"]
+        ENG["src/db/engine.py<br>AsyncEngine + SessionMaker"]
         BASE["DeclarativeBase"]
     end
 
@@ -43,9 +43,9 @@ flowchart TB
     end
 
     subgraph L5["Shared Utilities"]
-        EX["shared/exceptions.py<br/>(AB6AIError tree)"]
-        EV["shared/events.py<br/>(Pydantic event models)"]
-        TM["shared/telemetry_math.py<br/>(jerk, smoothness, engagement)"]
+        EX["shared/exceptions.py<br>(AB6AIError tree)"]
+        EV["shared/events.py<br>(Pydantic event models)"]
+        TM["shared/telemetry_math.py<br>(jerk, smoothness, engagement)"]
     end
 
     ENV --> SET
@@ -155,10 +155,10 @@ How a `get_settings()` call flows from `.env` to typed Python object.
 
 ```mermaid
 flowchart LR
-    A[".env file<br/>(gitignored)"] -->|overrides| D
-    B["Environment Variables<br/>(shell)"] -->|highest priority| D
-    C["Defaults in<br/>Settings class"] -->|lowest priority| D
-    D["pydantic-settings<br/>BaseSettings.__init__"] --> E["Validated Settings<br/>singleton (lru_cache)"]
+    A[".env file<br>(gitignored)"] -->|overrides| D
+    B["Environment Variables<br>(shell)"] -->|highest priority| D
+    C["Defaults in<br>Settings class"] -->|lowest priority| D
+    D["pydantic-settings<br>BaseSettings.__init__"] --> E["Validated Settings<br>singleton (lru_cache)"]
     E --> F1["engine.database_url"]
     E --> F2["provider.openai_api_key"]
     E --> F3["settings.llm_rate_limit_rpm"]
@@ -212,7 +212,7 @@ encapsulate SQL and let the rest of the code deal in Python objects.
 
 ```mermaid
 flowchart LR
-    N["OODA Node<br/>(Phase 5)"] -->|uses| REPO
+    N["OODA Node<br>(Phase 5)"] -->|uses| REPO
     subgraph REPO["Repository Layer (5)"]
         direction TB
         LP[LearnerProfileRepo]
@@ -221,7 +221,7 @@ flowchart LR
         CR[ConceptRepo]
         BR[BenchmarkRepo]
     end
-    REPO -->|session.execute| ENG[("AsyncEngine<br/>+ SessionMaker")]
+    REPO -->|session.execute| ENG[("AsyncEngine<br>+ SessionMaker")]
     ENG --> PG[(PostgreSQL 18 + pgvector)]
     REPO -->|domain objects| N
 
@@ -266,9 +266,9 @@ classDiagram
 ```mermaid
 flowchart LR
     subgraph DC["docker-compose.yml"]
-        API["api service<br/>uvicorn src.api.app:app"]
-        PG[("postgres<br/>pgvector/pgvector:pg18")]
-        RD[("redis<br/>redis:7-alpine")]
+        API["api service<br>uvicorn src.api.app:app"]
+        PG[("postgres<br>pgvector/pgvector:pg18")]
+        RD[("redis<br>redis:7-alpine")]
     end
     API -->|asyncpg| PG
     API -->|aioredis| RD
@@ -281,7 +281,7 @@ flowchart LR
 
 ```mermaid
 mindmap
-  root((Phase 1<br/>Foundation))
+  Phase 1 Foundation
     In scope
       pyproject.toml
       settings + llm_config

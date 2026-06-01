@@ -14,25 +14,25 @@ This is the exact topology from `src/agent/graph.py`:
 flowchart TB
     START([START]) --> OBS
 
-    OBS["observe<br/>(observe_node)"] --> CR{"continue_router<br//>cycle_count >= max_cycles?"}
+    OBS["observe<br>(observe_node)"] --> CR{"continue_router<br>cycle_count >= max_cycles?"}
 
     CR -- "yes" --> ENDNODE([END])
     CR -- "no" --> ORI
 
-    ORI["orient<br/>(orient_node)"] --> DEC
+    ORI["orient<br>(orient_node)"] --> DEC
 
-    DEC["decide<br/>(decide_node)"] --> DR{"decide_router<br/>should_pause?"}
+    DEC["decide<br>(decide_node)"] --> DR{"decide_router<br>should_pause?"}
 
     DR -- "no" --> ACT
     DR -- "yes" --> PAU
 
-    ACT["act<br/>(act_node)"] --> OBS
-    PAU["pause<br/>(pause_node)"] --> OBS
+    ACT["act<br>(act_node)"] --> OBS
+    PAU["pause<br>(pause_node)"] --> OBS
 
-    classDef node fill:#dbeafe,stroke:#1d4ed8
-    classDef router fill:#fef3c7,stroke:#b45309
-    class OBS,ORI,DEC,ACT,PAU node
-    class CR,DR router
+    classDef oodanode fill:#dbeafe,stroke:#1d4ed8
+    classDef oodarouter fill:#fef3c7,stroke:#b45309
+    class OBS,ORI,DEC,ACT,PAU oodanode
+    class CR,DR oodarouter
 ```
 
 Key invariants from the code:
@@ -91,27 +91,26 @@ classDiagram
     class OODAState
     MessagesState <|-- OODAState
 
-    ODA_STATE_FIELDS : OODAState
-    ODA_STATE_FIELDS : user_id
-    ODA_STATE_FIELDS : session_id
-    ODA_STATE_FIELDS : raw_events
-    ODA_STATE_FIELDS : telemetry_window
-    ODA_STATE_FIELDS : learner_profile
-    ODA_STATE_FIELDS : concept_state
-    ODA_STATE_FIELDS : diagnosed_struggles
-    ODA_STATE_FIELDS : engagement_score
-    ODA_STATE_FIELDS : selected_intervention
-    ODA_STATE_FIELDS : intervention_candidates
-    ODA_STATE_FIELDS : exploration_flag
-    ODA_STATE_FIELDS : intervention_delivered
-    ODA_STATE_FIELDS : delivery_channel
-    ODA_STATE_FIELDS : cycle_count
-    ODA_STATE_FIELDS : last_cycle_timestamp
-    ODA_STATE_FIELDS : should_pause
-    ODA_STATE_FIELDS : max_cycles
-    ODA_STATE_FIELDS : messages
-
-    ODA_STATE_FIELDS ..> OODAState : contains
+    class OODAState {
+        +str user_id
+        +str session_id
+        +list raw_events
+        +dict telemetry_window
+        +dict learner_profile
+        +dict concept_state
+        +list diagnosed_struggles
+        +float engagement_score
+        +dict selected_intervention
+        +list intervention_candidates
+        +bool exploration_flag
+        +dict intervention_delivered
+        +str delivery_channel
+        +int cycle_count
+        +str last_cycle_timestamp
+        +bool should_pause
+        +int max_cycles
+        +list messages
+    }
 ```
 
 | Field group | Written by | Read by |
@@ -147,11 +146,11 @@ drain pattern — events are processed exactly once.
 
 ```mermaid
 flowchart TB
-    IN["state.observation_summary<br/>state.learner_profile<br/>state.concept_state"] --> P["format ORIENT_PROMPT"]
-    P --> LLM["get_llm_for_purpose('reasoning')<br/>(GPT-4o with fallback chain)"]
-    LLM --> PARSE["parse_orient_response()<br/>(JSON)"]
-    PARSE --> OUT["{diagnosed_struggles,<br/>engagement_score,<br/>learner_profile delta,<br/>concept_state delta,<br/>narrative → messages[]}"]
-    OUT --> NEXT["DECIDE reads<br/>diagnosed_struggles"]
+    IN["state.observation_summary<br>state.learner_profile<br>state.concept_state"] --> P["format ORIENT_PROMPT"]
+    P --> LLM["get_llm_for_purpose('reasoning')<br>(GPT-4o with fallback chain)"]
+    LLM --> PARSE["parse_orient_response()<br>(JSON)"]
+    PARSE --> OUT["{diagnosed_struggles,<br>engagement_score,<br>learner_profile delta,<br>concept_state delta,<br>narrative → messages[]}"]
+    OUT --> NEXT["DECIDE reads<br>diagnosed_struggles"]
 ```
 
 Tools the ORIENT node may invoke via the LLM (Phase 5 §5.8 in the existing
@@ -168,12 +167,12 @@ docs):
 
 ```mermaid
 flowchart TB
-    IN["state.diagnosed_struggles<br/>state.learner_profile<br/>state.engagement_score"] --> SEL["InterventionSelector.select()<br/>(Phase 7)"]
-    SEL --> CAND["candidates[]<br/>(each has alpha, beta_param)"]
-    CAND --> L1["for each candidate:<br/>sample = np.random.beta(alpha, beta_param)"]
+    IN["state.diagnosed_struggles<br>state.learner_profile<br>state.engagement_score"] --> SEL["InterventionSelector.select()<br>(Phase 7)"]
+    SEL --> CAND["candidates[]<br>(each has alpha, beta_param)"]
+    CAND --> L1["for each candidate:<br>sample = np.random.beta(alpha, beta_param)"]
     L1 --> L2["best_arm = argmax sample"]
     L2 --> EXP["exploration_flag = total_trials < 10"]
-    L2 --> OUT["{selected_intervention,<br/>intervention_candidates,<br/>exploration_flag,<br/>messages: action+rationale}"]
+    L2 --> OUT["{selected_intervention,<br>intervention_candidates,<br>exploration_flag,<br>messages: action+rationale}"]
     EXP --> OUT
 ```
 
@@ -189,13 +188,13 @@ concentrate around the true win-rate.
 ```mermaid
 flowchart TB
     IN["state.selected_intervention"] --> CH{"exploration?"}
-    CH -- Yes --> DROP["delivery_channel = 'none'<br/>(safe exploration)"]
-    CH -- No --> GEN["LLM generate payload<br/>(reasoning model)"]
-    GEN --> LOG["InterventionRepo.create()<br/>(persist log)"]
+    CH -- Yes --> DROP["delivery_channel = 'none'<br>(safe exploration)"]
+    CH -- No --> GEN["LLM generate payload<br>(reasoning model)"]
+    GEN --> LOG["InterventionRepo.create()<br>(persist log)"]
     DROP --> LOG
-    GEN --> DEL["DeliveryManager.send()<br/>(WS / SSE)"]
-    LOG --> INC["cycle_count++<br/>last_cycle_timestamp = now"]
-    INC --> RET["return {intervention_delivered,<br/>delivery_channel, cycle_count+1, ...}"]
+    GEN --> DEL["DeliveryManager.send()<br>(WS / SSE)"]
+    LOG --> INC["cycle_count++<br>last_cycle_timestamp = now"]
+    INC --> RET["return {intervention_delivered,<br>delivery_channel, cycle_count+1, ...}"]
     DEL --> RET
 ```
 
@@ -209,8 +208,8 @@ delivered** to the student. Once enough data exists they go live.
 ```mermaid
 flowchart TD
     A["state.last_cycle_timestamp"] --> B{"elapsed < cooldown?"}
-    B -- Yes --> P["return {should_pause: True}<br/>(skips act this cycle)"]
-    B -- No --> C["return {should_pause: False}<br/>(act can run)"]
+    B -- Yes --> P["return {should_pause: True}<br>(skips act this cycle)"]
+    B -- No --> C["return {should_pause: False}<br>(act can run)"]
     P --> R["decide_router -> pause branch next cycle"]
     C --> R2["decide_router -> act branch next cycle"]
 ```
@@ -225,11 +224,11 @@ Cooldown defaults to **30 s** (and is also controlled by the
 ```mermaid
 flowchart TB
     A["_get_checkpointer()"] --> B{"DB reachable?"}
-    B -- Yes --> PG["AsyncPostgresSaver<br/>(survives restart)"]
-    B -- No --> MS["MemorySaver<br/>(per-process fallback)"]
+    B -- Yes --> PG["AsyncPostgresSaver<br>(survives restart)"]
+    B -- No --> MS["MemorySaver<br>(per-process fallback)"]
     PG --> C["builder.compile(checkpointer=...)"]
     MS --> C
-    C --> AG["Compiled agent<br/>(singleton per process)"]
+    C --> AG["Compiled agent<br>(singleton per process)"]
 ```
 
 The `.replace("+asyncpg", "")` is critical — `AsyncPostgresSaver` expects a
@@ -269,7 +268,7 @@ flowchart LR
     P2["decide_prompt.py"] --> DC["decide context"]
     P3["generate_prompt.py"] --> AC["act_node"]
     P4["explain_prompt.py"] --> TOOL["generation_tools"]
-    OR -- "ORIENT_SYSTEM_PROMPT + user prompt" --> OUT1["structured JSON:<br/>struggles, engagement, narrative"]
+    OR -- "ORIENT_SYSTEM_PROMPT + user prompt" --> OUT1["structured JSON:<br>struggles, engagement, narrative"]
     AC -- "ACT_SYSTEM_PROMPT + user prompt" --> OUT2["personalized intervention text"]
 ```
 
@@ -280,14 +279,14 @@ flowchart LR
 ```mermaid
 flowchart TB
     subgraph P5["src/agent/"]
-        ST["state.py<br/>(OODAState)"]
-        GR["graph.py<br/>(build_ooda_graph, compile_ooda_agent, create_initial_state)"]
-        ND["nodes/<br/>observe, orient, decide, act, pause, decide_router"]
-        TL["tools/<br/>mastery, concept, wisdom, delivery, generation, pacing, logging"]
-        PR["prompts/<br/>orient, decide, generate, explain"]
+        ST["state.py<br>(OODAState)"]
+        GR["graph.py<br>(build_ooda_graph, compile_ooda_agent, create_initial_state)"]
+        ND["nodes/<br>observe, orient, decide, act, pause, decide_router"]
+        TL["tools/<br>mastery, concept, wisdom, delivery, generation, pacing, logging"]
+        PR["prompts/<br>orient, decide, generate, explain"]
     end
-    CFG["config/settings.py<br/>(max_cycles, intervention_cooldown_seconds)"]
-    CKPT["langgraph.checkpoint.postgres<br/>(or MemorySaver fallback)"]
+    CFG["config/settings.py<br>(max_cycles, intervention_cooldown_seconds)"]
+    CKPT["langgraph.checkpoint.postgres<br>(or MemorySaver fallback)"]
     ST --> GR
     ND --> GR
     GR --> CKPT

@@ -10,21 +10,21 @@ the student's browser.
 
 ```mermaid
 flowchart LR
-    A["DECIDE node<br/>(Thompson sample)"] --> B["InterventionSelector<br/>(selector.py)"]
-    B --> C["candidate[] with<br/>alpha / beta_param"]
-    C --> D["Thompson sample<br/>argmax"]
+    A["DECIDE node<br>(Thompson sample)"] --> B["InterventionSelector<br>(selector.py)"]
+    B --> C["candidate[] with<br>alpha / beta_param"]
+    C --> D["Thompson sample<br>argmax"]
     D --> E["selected_intervention"]
     E --> F["Delivery.prepare_and_deliver()"]
-    F --> G["InterventionGenerator<br/>(LLM)"]
+    F --> G["InterventionGenerator<br>(LLM)"]
     G --> H["personalized content"]
     H --> I{"channel"}
     I -- websocket --> J["WebSocket push"]
     I -- sse --> K["SSE stream"]
-    I -- none --> L["logged only<br/>(exploration)"]
+    I -- none --> L["logged only<br>(exploration)"]
     J --> M["InterventionRepo.create()"]
     K --> M
     L --> M
-    M --> N["next cycle:<br/>measure_effectiveness()<br/>updates alpha/beta"]
+    M --> N["next cycle:<br>measure_effectiveness()<br>updates alpha/beta"]
     N --> B
 ```
 
@@ -40,8 +40,8 @@ flowchart TB
     IN["(struggles[], profile, engagement)"] --> S1["1. Type matching by learning_style"]
     S1 --> S2["2. Difficulty calibration by engagement + mastery"]
     S2 --> S3["3. Community boost (GlobalWisdom.success_rate)"]
-    S3 --> S4["4. History dedup<br/>(last 5 same type+concept excluded)"]
-    S4 --> OUT["candidates[]<br/>(each: type, concept, rationale,<br/>success_count, trial_count, expected_effectiveness)"]
+    S3 --> S4["4. History dedup<br>(last 5 same type+concept excluded)"]
+    S4 --> OUT["candidates[]<br>(each: type, concept, rationale,<br>success_count, trial_count, expected_effectiveness)"]
 ```
 
 The four heuristics in detail:
@@ -111,7 +111,7 @@ flowchart TB
     D --> E["parse JSON"]
     E --> F["CRITIQUE_PROMPT → llm.ainvoke()"]
     F --> G{"quality_score >= 0.7?"}
-    G -- No --> H["_regenerate_with_feedback()<br/>(one retry with critique)"]
+    G -- No --> H["_regenerate_with_feedback()<br>(one retry with critique)"]
     G -- Yes --> I["calibrate_difficulty(challenge, concept)"]
     H --> I
     I --> J["{concept_id, difficulty, quality_score, ...}"]
@@ -127,9 +127,9 @@ critique, and a regeneration loop if quality is below 0.7.
 ```mermaid
 flowchart LR
     P["intervention payload"] --> C{"delivery_channel"}
-    C -- websocket --> WS["WebSocket<br/>(_active_connections[user_id])"]
-    C -- sse --> SSE["SSE generator<br/>(sse_starlette)"]
-    C -- none --> NONE["only logged<br/>(safe exploration)"]
+    C -- websocket --> WS["WebSocket<br>(_active_connections[user_id])"]
+    C -- sse --> SSE["SSE generator<br>(sse_starlette)"]
+    C -- none --> NONE["only logged<br>(safe exploration)"]
     WS --> STU["Student browser"]
     SSE --> STU
     NONE --> LOG["ai_intervention_logs"]
@@ -194,10 +194,10 @@ The 7 supported intervention types and what they map to.
 ```mermaid
 flowchart LR
     subgraph P7["src/intervention/"]
-        SE["selector.py<br/>(select_intervention, segment_learner, find_best_video_for_concept)"]
-        G["generator.py<br/>(generate_challenge, generate_concept_explanation)"]
-        E["effectiveness.py<br/>(measure_effectiveness, calibrate_difficulty)"]
-        D["delivery.py<br/>(WebSocket + SSE channels)"]
+        SE["selector.py<br>(select_intervention, segment_learner, find_best_video_for_concept)"]
+        G["generator.py<br>(generate_challenge, generate_concept_explanation)"]
+        E["effectiveness.py<br>(measure_effectiveness, calibrate_difficulty)"]
+        D["delivery.py<br>(WebSocket + SSE channels)"]
     end
     subgraph DEPS["Dependencies"]
         WR["WisdomRepo"]

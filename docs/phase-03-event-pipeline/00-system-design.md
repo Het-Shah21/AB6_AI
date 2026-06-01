@@ -12,8 +12,8 @@ queue.
 ```mermaid
 flowchart LR
     subgraph CLIENT["Client (browser / robot)"]
-        U["Student event<br/>(HTTP POST)"]
-        T["Telemetry stream<br/>(WebSocket)"]
+        U["Student event<br>(HTTP POST)"]
+        T["Telemetry stream<br>(WebSocket)"]
     end
 
     subgraph API["src/api/"]
@@ -22,17 +22,17 @@ flowchart LR
     end
 
     subgraph ING["src/ingestion/"]
-        SCH["schemas.py<br/>(Pydantic validation)"]
-        CON["consumer.py<br/>(RedisStreamConsumer)"]
-        AGG["aggregator.py<br/>(TelemetryAggregator)"]
-        WRK["worker.py<br/>(ARQ process)"]
+        SCH["schemas.py<br>(Pydantic validation)"]
+        CON["consumer.py<br>(RedisStreamConsumer)"]
+        AGG["aggregator.py<br>(TelemetryAggregator)"]
+        WRK["worker.py<br>(ARQ process)"]
     end
 
     subgraph REDIS["Redis 7"]
-        S1["ai:observations<br/>(Stream)"]
-        S2["ai:telemetry<br/>(Stream)"]
-        S3["ai:domain_events<br/>(Stream)"]
-        L1["user:{id}:events<br/>(List, capped 100)"]
+        S1["ai:observations<br>(Stream)"]
+        S2["ai:telemetry<br>(Stream)"]
+        S3["ai:domain_events<br>(Stream)"]
+        L1["user:{id}:events<br>(List, capped 100)"]
     end
 
     U -->|"POST /events"| EVR
@@ -48,7 +48,7 @@ flowchart LR
     S3 -->|"XREADGROUP"| WRK
     WRK --> AGG
     WRK -->|"LPUSH + LTRIM 100"| L1
-    L1 -->|"OODA Observe<br/>raw_events"| OODA["Phase 5 — OODA Agent"]
+    L1 -->|"OODA Observe<br>raw_events"| OODA["Phase 5 — OODA Agent"]
     AGG -->|"telemetry_window"| OODA
 ```
 
@@ -63,14 +63,14 @@ node consumes each cycle.
 ```mermaid
 flowchart TB
     EV["incoming telemetry dict"] --> ADD["add_data(user_id, ev)"]
-    ADD --> W1["30s window<br/>(near real-time)"]
-    ADD --> W2["2m window<br/>(short-term trend)"]
-    ADD --> W3["5m window<br/>(medium-term trend)"]
+    ADD --> W1["30s window<br>(near real-time)"]
+    ADD --> W2["2m window<br>(short-term trend)"]
+    ADD --> W3["5m window<br>(medium-term trend)"]
     W1 --> AGG["aggregate(user_id)"]
     W2 --> AGG
     W3 --> AGG
-    AGG --> OUT["{ '30s': {smoothness, imu_samples, joint_samples},<br/>'2m': {...}, '5m': {...} }"]
-    OUT --> OBS["OBSERVE node reads<br/>telemetry_window from state"]
+    AGG --> OUT["{ '30s': {smoothness, imu_samples, joint_samples},<br>'2m': {...}, '5m': {...} }"]
+    OUT --> OBS["OBSERVE node reads<br>telemetry_window from state"]
 ```
 
 ---
@@ -98,7 +98,7 @@ sequenceDiagram
         W->>RS: XACK (acknowledge)
     end
 
-    Note over OBS: Next OODA cycle<br/>reads from RL via state.raw_events
+    Note over OBS: Next OODA cycle<br>reads from RL via state.raw_events
 ```
 
 ---
@@ -116,7 +116,7 @@ sequenceDiagram
     participant W2 as Worker 2
 
     P->>R: XADD ai:observations * data=...
-    Note over R: xgroup_create<br/>(mkstream=True, id=0)
+    Note over R: xgroup_create<br>(mkstream=True, id=0)
     P->>R: XADD ai:observations * data=...
     par parallel consumption
         W1->>R: XREADGROUP g1 w1 COUNT 10 BLOCK 2000
@@ -137,18 +137,18 @@ sequenceDiagram
 flowchart LR
     subgraph P1["Observations"]
         S1["ai:observations"]
-        P1A["events.py<br/>POST /events"]
-        C1A["worker.py<br/>process_observation"]
+        P1A["events.py<br>POST /events"]
+        C1A["worker.py<br>process_observation"]
     end
     subgraph P2["Telemetry"]
         S2["ai:telemetry"]
-        P2A["telemetry.py<br/>WS /telemetry/ws"]
-        C2A["worker.py<br/>process_telemetry"]
+        P2A["telemetry.py<br>WS /telemetry/ws"]
+        C2A["worker.py<br>process_telemetry"]
     end
     subgraph P3["Domain"]
         S3["ai:domain_events"]
-        P3A["events.py<br/>POST /domain-events"]
-        C3A["worker.py<br/>process_domain_event"]
+        P3A["events.py<br>POST /domain-events"]
+        C3A["worker.py<br>process_domain_event"]
     end
 
     P1A --> S1 --> C1A
@@ -169,9 +169,9 @@ before they ever reach Redis.
 
 ```mermaid
 flowchart LR
-    REQ["HTTP Request body"] --> P["ObservationRequest<br/>(Pydantic)"]
-    P -->|"Field(ge=0, le=1)<br/>for score"| OK1{{"Valid?"}}
-    OK1 -- No --> R422["422 Unprocessable Entity<br/>(rejected at the edge)"]
+    REQ["HTTP Request body"] --> P["ObservationRequest<br>(Pydantic)"]
+    P -->|"Field(ge=0, le=1)<br>for score"| OK1{{"Valid?"}}
+    OK1 -- No --> R422["422 Unprocessable Entity<br>(rejected at the edge)"]
     OK1 -- Yes --> PUSH["RedisStreamConsumer.push_observation()"]
     PUSH --> REDIS["ai:observations"]
 ```
@@ -183,13 +183,13 @@ flowchart LR
 ```mermaid
 flowchart TB
     subgraph P3["src/ingestion/"]
-        S["schemas.py<br/>(3 Pydantic payloads + 3 stream-name consts)"]
-        C["consumer.py<br/>(RedisStreamConsumer)"]
-        A["aggregator.py<br/>(TelemetryAggregator)"]
-        W["worker.py<br/>(ARQ WorkerSettings)"]
+        S["schemas.py<br>(3 Pydantic payloads + 3 stream-name consts)"]
+        C["consumer.py<br>(RedisStreamConsumer)"]
+        A["aggregator.py<br>(TelemetryAggregator)"]
+        W["worker.py<br>(ARQ WorkerSettings)"]
     end
-    SH["src/shared/events.py<br/>(internal event models)"]
-    TM["src/shared/telemetry_math.py<br/>(pure math)"]
+    SH["src/shared/events.py<br>(internal event models)"]
+    TM["src/shared/telemetry_math.py<br>(pure math)"]
     C --> S
     A --> TM
     W --> A

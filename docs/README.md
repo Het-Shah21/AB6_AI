@@ -166,7 +166,7 @@ flowchart TB
     S4["Step 4 — Phase 2: LLM (20 min)"] --> S5
     S5["Step 5 — Phase 3: Event Pipeline (20 min)"] --> S6
     S6["Step 6 — Phase 4: Concept Graph (20 min)"] --> S7
-    S7["Step 7 — Phase 5: OODA Agent (45 min)<br/>(the heart of the system)"] --> S8
+    S7["Step 7 — Phase 5: OODA Agent (45 min)<br>(the heart of the system)"] --> S8
     S8["Step 8 — Phase 6: Dual Memory (15 min)"] --> S9
     S9["Step 9 — Phase 7: Intervention Engine (20 min)"] --> S10
     S10["Step 10 — Phase 8: API Layer (15 min)"] --> S11
@@ -841,12 +841,12 @@ Plus two top-level documents:
 
 ```mermaid
 flowchart TB
-    U([New reader]) --> R1[docs/README.md<br/>(this file)]
-    R1 --> R2[docs/SYSTEM_DESIGN.md<br/>(one-picture view)]
-    R2 --> R3[Run a demo<br/>(demo.py / interactive_demo.py)]
-    R3 --> R4[Read each phase in order:<br/>00-system-design.md first,<br/>then 01-*.md]
-    R4 --> R5[Re-read SYSTEM_DESIGN.md<br/>now with code in head]
-    R5 --> R6[Use reference index<br/>as needed]
+    U([New reader]) --> R1[docs/README.md<br>(this file)]
+    R1 --> R2[docs/SYSTEM_DESIGN.md<br>(one-picture view)]
+    R2 --> R3[Run a demo<br>(demo.py / interactive_demo.py)]
+    R3 --> R4[Read each phase in order:<br>00-system-design.md first,<br>then 01-*.md]
+    R4 --> R5[Re-read SYSTEM_DESIGN.md<br>now with code in head]
+    R5 --> R6[Use reference index<br>as needed]
     style R1 fill:#fef3c7
     style R2 fill:#fef3c7
     style R4 fill:#dcfce7

@@ -11,11 +11,11 @@ guard the contracts established in Phases 1–8, and three demo scripts
 ```mermaid
 flowchart TB
     subgraph T["tests/ (21 tests across 5 files)"]
-        T1["test_ingestion.py<br/>(4 tests)"]
-        T2["test_concept_graph.py<br/>(4 tests)"]
-        T3["test_agent.py<br/>(5 tests)"]
-        T4["test_intervention.py<br/>(4 tests)"]
-        T5["test_memory.py<br/>(4 tests)"]
+        T1["test_ingestion.py<br>(4 tests)"]
+        T2["test_concept_graph.py<br>(4 tests)"]
+        T3["test_agent.py<br>(5 tests)"]
+        T4["test_intervention.py<br>(4 tests)"]
+        T5["test_memory.py<br>(4 tests)"]
     end
     T1 --> P3["Phase 3 — Event Pipeline"]
     T2 --> P4["Phase 4 — Concept Graph"]
@@ -34,10 +34,10 @@ correspondence is what makes regressions easy to localize.
 ```mermaid
 flowchart LR
     subgraph CF["conftest.py"]
-        F1["mock_redis<br/>(FakeRedis)"]
-        F2["mock_session<br/>(AsyncMock SQLAlchemy)"]
-        F3["mock_llm<br/>(returns fixed JSON)"]
-        F4["test_settings<br/>(test DB URL override)"]
+        F1["mock_redis<br>(FakeRedis)"]
+        F2["mock_session<br>(AsyncMock SQLAlchemy)"]
+        F3["mock_llm<br>(returns fixed JSON)"]
+        F4["test_settings<br>(test DB URL override)"]
     end
     F1 --> T1
     F2 --> T2
@@ -71,7 +71,7 @@ sequenceDiagram
     T->>ST: build initial state with one event
     T->>IN: agent.ainvoke(state)
     IN-->>T: result
-    T->>T: assert cycle_count >= 1<br/>assert 'messages' in result
+    T->>T: assert cycle_count >= 1<br>assert 'messages' in result
     T-->>T: PASS in <60s
 ```
 
@@ -82,7 +82,7 @@ sequenceDiagram
 
 ```mermaid
 flowchart LR
-    A["3 arms:<br/>A hint Beta(6,5)<br/>B video Beta(2,9)<br/>C practice Beta(10,1)"] --> L["loop 1000 times"]
+    A["3 arms:<br>A hint Beta(6,5)<br>B video Beta(2,9)<br>C practice Beta(10,1)"] --> L["loop 1000 times"]
     L --> S["draw 1 sample from each Beta"]
     S --> M["argmax of 3 samples"]
     M --> C["Counter of which arm won"]
@@ -193,11 +193,11 @@ sits one level up; the interactive demo is the manual E2E at the top.
 
 ```mermaid
 flowchart LR
-    B1["Infinite OODA loop<br/>(no max_cycles)"] --> F1["Fix: continue_router + max_cycles=9999"]
+    B1["Infinite OODA loop<br>(no max_cycles)"] --> F1["Fix: continue_router + max_cycles=9999"]
     F1 --> T1["test_one_ooda_cycle (max_cycles=1)"]
     B2["web_demo button did nothing"] --> F2["Fix: SSR replaces JS onclick"]
     F2 --> T2["manual click in interactive_demo"]
-    B3["NAME_PATTERN over-matched<br/>(caught 'Inverse Kinematics')"] --> F3["Fix: require 'name:'/'user:'/'student:' prefix"]
+    B3["NAME_PATTERN over-matched<br>(caught 'Inverse Kinematics')"] --> F3["Fix: require 'name:'/'user:'/'student:' prefix"]
     F3 --> T3["implicit in event-validation tests"]
 ```
 
@@ -208,7 +208,7 @@ flowchart LR
 ```mermaid
 flowchart LR
     A["pytest tests/ -v"] --> B["auto-discovers test_*.py"]
-    B --> C["asyncio_mode=auto<br/>(no @pytest.mark.asyncio needed)"]
+    B --> C["asyncio_mode=auto<br>(no @pytest.mark.asyncio needed)"]
     C --> D["runs 21 tests"]
     D --> E["exit 0 on pass"]
     D --> F["exit 1 + traceback on fail"]
@@ -246,12 +246,12 @@ flowchart LR
         T5["test_memory.py"]
     end
     subgraph D["Demos (root)"]
-        D1["demo.py<br/>(CLI)"]
-        D2["web_demo.py<br/>(SSR)"]
-        D3["interactive_demo.py<br/>(form + WS)"]
+        D1["demo.py<br>(CLI)"]
+        D2["web_demo.py<br>(SSR)"]
+        D3["interactive_demo.py<br>(form + WS)"]
     end
     subgraph CFG["pyproject.toml"]
-        PM["asyncio_mode = auto<br/>testpaths = tests"]
+        PM["asyncio_mode = auto<br>testpaths = tests"]
     end
     CFG --> T
     T --> SRC["src/ (all phases)"]
