@@ -51,6 +51,11 @@ tables, critical invariants).
 See [`docs/architecture.md`](docs/architecture.md) for the original prose
 overview.
 
+See [`docs/EMBEDDED_SYSTEM_ARCHITECTURE.md`](docs/EMBEDDED_SYSTEM_ARCHITECTURE.md)
+for how the agent fits into a Frontend → Proxy → Backend → Middleware →
+Robot pipeline, plus robustness/scalability analysis, Go + gRPC
+compatibility, and tech-stack migration recipes.
+
 ## Project Structure
 
 ```
@@ -84,6 +89,7 @@ Full API docs at [`docs/api.md`](docs/api.md).
 |---|---|
 | [`docs/README.md`](docs/README.md) | **Start here** — the navigation manual |
 | [`docs/SYSTEM_DESIGN.md`](docs/SYSTEM_DESIGN.md) | Master visual system design |
+| [`docs/EMBEDDED_SYSTEM_ARCHITECTURE.md`](docs/EMBEDDED_SYSTEM_ARCHITECTURE.md) | Embedded-system fit, robustness, scalability, Go/gRPC migration |
 | `docs/architecture.md` | Original prose architecture overview |
 | `docs/api.md` | API reference |
 | `docs/concept_graph.md` | Concept graph deep-dive |

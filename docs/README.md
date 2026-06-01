@@ -838,6 +838,11 @@ Plus two top-level documents:
 
 - **`docs/README.md`** (this file) — the navigation manual.
 - **`docs/SYSTEM_DESIGN.md`** — the cross-phase visual index.
+- **`docs/EMBEDDED_SYSTEM_ARCHITECTURE.md`** — how the agent fits into a
+  Frontend → Proxy → Backend → Middleware → Robot pipeline, including
+  robustness, scalability, tech-stack migration, and Go/gRPC backend
+  compatibility. Read this if you are embedding the agent into a larger
+  system or evaluating backend alternatives.
 
 ```mermaid
 flowchart TB
