@@ -290,7 +290,7 @@ mindmap
       5 repositories
       shared exceptions/events/math
       alembic migrations
-      docker-compose
+      docker compose
     Out of scope (later phases)
       LLM provider fallback
       Redis stream consumer
