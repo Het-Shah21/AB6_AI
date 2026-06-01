@@ -30,6 +30,20 @@ uvicorn src.api.app:app --host 0.0.0.0 --port 8000 --reload
 > read, in what order. For the visual one-page system overview, open
 > [`docs/SYSTEM_DESIGN.md`](docs/SYSTEM_DESIGN.md).
 
+## Live stack (one-shot)
+
+Want the full stack with real Postgres + Redis + ARQ + API, not the
+offline demo? Run from the repo root:
+
+```powershell
+.\start-live.ps1     # builds + starts everything, health-checks the API
+.\stop-live.ps1      # tears it back down
+```
+
+`start-live.ps1` is idempotent (safe to re-run) and supports
+`-SkipInstall`, `-SkipMigrate`, `-ApiPort`, `-WaitSeconds`. It needs
+Docker Desktop and Python 3.11+ installed; the rest is automatic.
+
 ## Try it without any setup (demos work offline)
 
 The 3-way LLM fallback chain lets the demos run with **no API keys**:
