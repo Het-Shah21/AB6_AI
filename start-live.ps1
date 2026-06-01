@@ -1,7 +1,7 @@
-<#
+﻿<#
 .SYNOPSIS
   Brings up the AB6 AI agent stack with real infrastructure (Postgres, Redis,
-  ARQ worker, FastAPI). Idempotent — safe to re-run.
+  ARQ worker, FastAPI). Idempotent - safe to re-run.
 
 .DESCRIPTION
   Performs:
@@ -25,8 +25,8 @@
 
 [CmdletBinding()]
 param(
-    [switch]$SkipInstall = $false,    # Skip pip install (faster re-runs)
-    [switch]$SkipMigrate = $false,    # Skip alembic (faster re-runs)
+    [switch]$SkipInstall = $false,
+    [switch]$SkipMigrate = $false,
     [int]$ApiPort = 8000,
     [int]$WaitSeconds = 60
 )
@@ -34,13 +34,11 @@ param(
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 
-# ── Style helpers ─────────────────────────────────────────────────────────
 function Write-Step($msg)  { Write-Host "`n>> $msg" -ForegroundColor Cyan }
 function Write-Ok($msg)    { Write-Host "   [OK] $msg" -ForegroundColor Green }
 function Write-Warn($msg)  { Write-Host "   [WARN] $msg" -ForegroundColor Yellow }
 function Write-Err($msg)   { Write-Host "   [FAIL] $msg" -ForegroundColor Red }
 
-# ── Paths ────────────────────────────────────────────────────────────────
 $RepoRoot      = (Get-Location).Path
 $VenvDir       = Join-Path $RepoRoot '.venv'
 $EnvFile       = Join-Path $RepoRoot '.env'
@@ -50,10 +48,9 @@ $PidFile       = Join-Path $RepoRoot '.runtime-pids.json'
 
 New-Item -ItemType Directory -Force -Path $LogDir | Out-Null
 
-# ── 1. Pre-flight ────────────────────────────────────────────────────────
+# --- 1. Pre-flight ---
 Write-Step "Pre-flight checks"
 
-# Docker
 try {
     $null = docker version 2>&1
     if ($LASTEXITCODE -ne 0) { throw "docker not responding" }
@@ -64,7 +61,6 @@ try {
     exit 1
 }
 
-# docker compose
 try {
     $null = docker compose version 2>&1
     if ($LASTEXITCODE -ne 0) { throw "compose v2 not found" }
@@ -74,7 +70,6 @@ try {
     exit 1
 }
 
-# Python
 $py = $null
 foreach ($v in '3.14','3.13','3.12','3.11') {
     try {
@@ -88,13 +83,13 @@ if (-not $py) {
 }
 Write-Ok "Python found: $py"
 
-# ── 2. Start Postgres + Redis ────────────────────────────────────────────
+# --- 2. Start Postgres + Redis ---
 Write-Step "Starting Postgres + Redis via docker compose"
 docker compose up -d postgres redis
 if ($LASTEXITCODE -ne 0) { Write-Err "docker compose up failed"; exit 1 }
 Write-Ok "Containers requested"
 
-# ── 3. Wait for health ───────────────────────────────────────────────────
+# --- 3. Wait for health ---
 Write-Step "Waiting for Postgres + Redis to be healthy (up to ${WaitSeconds}s)"
 
 $deadline = (Get-Date).AddSeconds($WaitSeconds)
@@ -121,7 +116,7 @@ while ((Get-Date) -lt $deadline) {
 if (-not $pgReady) { Write-Err "Postgres not ready after ${WaitSeconds}s"; exit 1 }
 if (-not $redisReady) { Write-Err "Redis not ready after ${WaitSeconds}s"; exit 1 }
 
-# ── 4. Python venv + deps ────────────────────────────────────────────────
+# --- 4. Python venv + deps ---
 if (-not (Test-Path $VenvDir)) {
     Write-Step "Creating Python venv at .venv"
     & py -3.11 -m venv $VenvDir
@@ -131,7 +126,7 @@ if (-not (Test-Path $VenvDir)) {
     Write-Ok "venv already exists"
 }
 
-$venvPy = Join-Path $VenvDir 'Scripts\python.exe'
+$venvPy  = Join-Path $VenvDir 'Scripts\python.exe'
 $venvPip = Join-Path $VenvDir 'Scripts\pip.exe'
 
 if (-not $SkipInstall) {
@@ -144,7 +139,7 @@ if (-not $SkipInstall) {
     Write-Ok "Skipping pip install (-SkipInstall)"
 }
 
-# ── 5. .env setup ────────────────────────────────────────────────────────
+# --- 5. .env setup ---
 if (-not (Test-Path $EnvFile)) {
     if (Test-Path $EnvExample) {
         Copy-Item $EnvExample $EnvFile
@@ -157,7 +152,8 @@ if (-not (Test-Path $EnvFile)) {
 }
 
 # Warn if no LLM key
-$envContent = Get-Content $EnvFile -Raw
+$envBytes = [System.IO.File]::ReadAllBytes($EnvFile)
+$envContent = [System.Text.Encoding]::UTF8.GetString($envBytes)
 $hasKey = $false
 foreach ($k in 'OPENAI_API_KEY','ANTHROPIC_API_KEY','GOOGLE_API_KEY') {
     if ($envContent -match "(?m)^${k}=.+" -and $envContent -notmatch "(?m)^${k}=\s*$" -and $envContent -notmatch "(?m)^${k}=sk-\.\.\.") {
@@ -165,13 +161,13 @@ foreach ($k in 'OPENAI_API_KEY','ANTHROPIC_API_KEY','GOOGLE_API_KEY') {
     }
 }
 if (-not $hasKey) {
-    Write-Warn "No LLM API key set in .env — agent will run in DEMO MODE (canned responses)"
+    Write-Warn "No LLM API key set in .env - agent will run in DEMO MODE (canned responses)"
     Write-Host "         Edit .env and add OPENAI_API_KEY=sk-... then re-run." -ForegroundColor Yellow
 } else {
     Write-Ok "LLM API key detected"
 }
 
-# ── 6. Alembic migrations ────────────────────────────────────────────────
+# --- 6. Alembic migrations ---
 if (-not $SkipMigrate) {
     Write-Step "Running database migrations (alembic upgrade head)"
     Push-Location $RepoRoot
@@ -184,10 +180,9 @@ if (-not $SkipMigrate) {
     Write-Ok "Skipping migrations (-SkipMigrate)"
 }
 
-# ── 7. ARQ worker (background) ───────────────────────────────────────────
+# --- 7. ARQ worker (background) ---
 Write-Step "Starting ARQ worker (background)"
 
-# Stop any previous instance
 Get-Process -Name 'arq' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 
 $arqLog = Join-Path $LogDir 'arq.log'
@@ -199,21 +194,21 @@ $arqProc = Start-Process -FilePath $venvPy `
     -PassThru -WindowStyle Hidden
 Write-Ok "ARQ worker started (PID $($arqProc.Id), log: $arqLog)"
 
-# ── 8. Uvicorn API (background) ──────────────────────────────────────────
+# --- 8. Uvicorn API (background) ---
 Write-Step "Starting FastAPI / uvicorn (background)"
 
 Get-Process -Name 'uvicorn' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 
 $apiLog = Join-Path $LogDir 'api.log'
 $apiProc = Start-Process -FilePath $venvPy `
-    -ArgumentList '-m','uvicorn','src.api.app:app','--host','0.0.0.0','--port',$ApiPort '--no-access-log' `
+    -ArgumentList '-m','uvicorn','src.api.app:app','--host','0.0.0.0','--port',$ApiPort,'--no-access-log' `
     -WorkingDirectory $RepoRoot `
     -RedirectStandardOutput $apiLog `
     -RedirectStandardError (Join-Path $LogDir 'api.err.log') `
     -PassThru -WindowStyle Hidden
 Write-Ok "API started (PID $($apiProc.Id), log: $apiLog)"
 
-# ── 9. Health check ──────────────────────────────────────────────────────
+# --- 9. Health check ---
 Write-Step "Health-checking http://127.0.0.1:${ApiPort}/health"
 
 $healthy = $false
@@ -231,34 +226,34 @@ if ($healthy) {
     Write-Warn "API did not respond on /health within 20s. Check $LogDir\api.err.log"
 }
 
-# ── 10. Save PIDs + summary ──────────────────────────────────────────────
+# --- 10. Save PIDs + summary ---
 $pidInfo = @{
     api   = @{ pid = $apiProc.Id; log = $apiLog }
     arq   = @{ pid = $arqProc.Id; log = $arqLog }
     ports = @{ api = $ApiPort }
 } | ConvertTo-Json -Depth 3
-Set-Content -LiteralPath $PidFile -Value $pidInfo
+[System.IO.File]::WriteAllText($PidFile, $pidInfo, [System.Text.UTF8Encoding]::new($false))
 
-# ── Summary ──────────────────────────────────────────────────────────────
+# --- Summary ---
 Write-Host ""
-Write-Host "════════════════════════════════════════════════════════════════" -ForegroundColor Green
-Write-Host "  AB6 AI AGENT — LIVE STACK UP" -ForegroundColor Green
-Write-Host "════════════════════════════════════════════════════════════════" -ForegroundColor Green
+Write-Host "============================================================" -ForegroundColor Green
+Write-Host "  AB6 AI AGENT - LIVE STACK UP" -ForegroundColor Green
+Write-Host "============================================================" -ForegroundColor Green
 Write-Host ""
-Write-Host "  API:      http://127.0.0.1:${ApiPort}" -ForegroundColor White
-Write-Host "  Docs:     http://127.0.0.1:${ApiPort}/docs" -ForegroundColor White
+Write-Host "  API:       http://127.0.0.1:${ApiPort}" -ForegroundColor White
+Write-Host "  Docs:      http://127.0.0.1:${ApiPort}/docs" -ForegroundColor White
 Write-Host "  WebSocket: ws://127.0.0.1:${ApiPort}/api/v1/ai/telemetry/ws" -ForegroundColor White
-Write-Host "  Postgres: localhost:5432  (ab6 / ab6_pass / ab6_ai)" -ForegroundColor White
-Write-Host "  Redis:    localhost:6379" -ForegroundColor White
+Write-Host "  Postgres:  localhost:5432  (ab6 / ab6_pass / ab6_ai)" -ForegroundColor White
+Write-Host "  Redis:     localhost:6379" -ForegroundColor White
 Write-Host ""
-Write-Host "  Logs:     $LogDir" -ForegroundColor White
-Write-Host "  PIDs:     $PidFile" -ForegroundColor White
+Write-Host "  Logs:      $LogDir" -ForegroundColor White
+Write-Host "  PIDs:      $PidFile" -ForegroundColor White
 Write-Host ""
-Write-Host "  ── Try it ──" -ForegroundColor Cyan
-Write-Host '  curl -X POST http://127.0.0.1:8000/api/v1/ai/events \'
-Write-Host '       -H "Content-Type: application/json" \'
-Write-Host '       -d ''{"user_id":"u1","session_id":"s1","event_type":"end_attempt","challenge_id":"ik-1","score":0.3,"is_correct":false}'''
+Write-Host "  --- Try it ---" -ForegroundColor Cyan
+Write-Host "  curl -X POST http://127.0.0.1:8000/api/v1/ai/events ^"
+Write-Host "       -H \"Content-Type: application/json\" ^"
+Write-Host "       -d '{\"user_id\":\"u1\",\"session_id\":\"s1\",\"event_type\":\"end_attempt\",\"challenge_id\":\"ik-1\",\"score\":0.3,\"is_correct\":false}'"
 Write-Host ""
-Write-Host "  ── Stop everything ──" -ForegroundColor Cyan
-Write-Host "  .\stop-live.ps1" -ForegroundColor White
+Write-Host "  --- Stop everything ---" -ForegroundColor Cyan
+Write-Host '  .\stop-live.ps1'
 Write-Host ""
