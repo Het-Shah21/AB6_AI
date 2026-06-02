@@ -27,7 +27,9 @@
 param(
     [switch]$SkipInstall = $false,
     [switch]$SkipMigrate = $false,
+    [switch]$WithUi = $false,
     [int]$ApiPort = 8000,
+    [int]$UiPort = 8501,
     [int]$WaitSeconds = 60
 )
 
@@ -227,11 +229,32 @@ if ($healthy) {
 }
 
 # --- 10. Save PIDs + summary ---
-$pidInfo = @{
+$pidInfoObj = @{
     api   = @{ pid = $apiProc.Id; log = $apiLog }
     arq   = @{ pid = $arqProc.Id; log = $arqLog }
     ports = @{ api = $ApiPort }
-} | ConvertTo-Json -Depth 3
+}
+
+# --- 8.5 Optional: Streamlit UI ---
+$uiProc = $null
+$uiLog = $null
+if ($WithUi) {
+    Write-Step "Starting Streamlit UI on port $UiPort"
+    Get-Process -Name 'streamlit' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+    $uiLog = Join-Path $LogDir 'ui.log'
+    $env:MENTOR_API = "http://127.0.0.1:${ApiPort}"
+    $uiProc = Start-Process -FilePath $venvPy `
+        -ArgumentList '-m','streamlit','run','ui/streamlit_app.py','--server.port',$UiPort,'--server.headless','true','--browser.gatherUsageStats','false' `
+        -WorkingDirectory $RepoRoot `
+        -RedirectStandardOutput $uiLog `
+        -RedirectStandardError (Join-Path $LogDir 'ui.err.log') `
+        -PassThru -WindowStyle Hidden
+    Write-Ok "UI started (PID $($uiProc.Id), log: $uiLog)"
+    $pidInfoObj.ui    = @{ pid = $uiProc.Id; log = $uiLog }
+    $pidInfoObj.ports = @{ api = $ApiPort; ui = $UiPort }
+}
+
+$pidInfo = $pidInfoObj | ConvertTo-Json -Depth 3
 [System.IO.File]::WriteAllText($PidFile, $pidInfo, [System.Text.UTF8Encoding]::new($false))
 
 # --- Summary ---
@@ -245,6 +268,9 @@ Write-Host "  Docs:      http://127.0.0.1:${ApiPort}/docs" -ForegroundColor Whit
 Write-Host "  WebSocket: ws://127.0.0.1:${ApiPort}/api/v1/ai/telemetry/ws" -ForegroundColor White
 Write-Host "  Postgres:  localhost:5432  (ab6 / ab6_pass / ab6_ai)" -ForegroundColor White
 Write-Host "  Redis:     localhost:6379" -ForegroundColor White
+if ($uiProc) {
+    Write-Host "  UI:        http://127.0.0.1:${UiPort}" -ForegroundColor White
+}
 Write-Host ""
 Write-Host "  Logs:      $LogDir" -ForegroundColor White
 Write-Host "  PIDs:      $PidFile" -ForegroundColor White

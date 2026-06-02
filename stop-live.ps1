@@ -20,7 +20,7 @@ Write-Step "Stopping AB6 live stack"
 # Stop via PIDs from .runtime-pids.json
 if (Test-Path $PidFile) {
     $pids = Get-Content $PidFile -Raw | ConvertFrom-Json
-    foreach ($proc in @('api','arq')) {
+    foreach ($proc in @('api','arq','ui')) {
         $id = $pids.$proc.pid
         if ($id) {
             $p = Get-Process -Id $id -ErrorAction SilentlyContinue
@@ -44,6 +44,10 @@ Get-Process -Name 'uvicorn' -ErrorAction SilentlyContinue | ForEach-Object {
 Get-Process -Name 'arq' -ErrorAction SilentlyContinue | ForEach-Object {
     Stop-Process -Id $_.Id -Force
     Write-Ok "Killed arq PID $($_.Id)"
+}
+Get-Process -Name 'streamlit' -ErrorAction SilentlyContinue | ForEach-Object {
+    Stop-Process -Id $_.Id -Force
+    Write-Ok "Killed streamlit PID $($_.Id)"
 }
 
 if ($AlsoDocker) {

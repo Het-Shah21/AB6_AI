@@ -29,11 +29,15 @@ streams over **WebSocket**, and is exposed via **FastAPI**.
 # Full live stack (Postgres + Redis + uvicorn + ARQ worker)
 .\start-live.ps1
 
+# Same plus the Streamlit UI on http://127.0.0.1:8501
+.\start-live.ps1 -WithUi
+
 # Or manually:
 docker compose up -d postgres redis
-pip install -e .
+pip install -e ".[ui]"   # adds streamlit
 alembic upgrade head
 uvicorn mentor_app:app --host 0.0.0.0 --port 8000
+streamlit run ui/streamlit_app.py
 ```
 
 > **First time here?** Open [`docs/README.md`](docs/README.md) — it's
@@ -46,6 +50,9 @@ uvicorn mentor_app:app --host 0.0.0.0 --port 8000
 |--------|-------------------------------------|----------------------------------|
 | `POST` | `/mentor/cycle`                     | Run a full 8-stage cycle         |
 | `POST` | `/mentor/approve`                   | Resume a paused HITL cycle       |
+| `GET`  | `/mentor/users`                     | List learners from `user_details`|
+| `GET`  | `/mentor/pending/{user_id}`         | List HITL-queued cycles          |
+| `GET`  | `/mentor/history/{user_id}`         | Recent observation_log rows      |
 | `WS`   | `/mentor/ws?user_id=<uuid>`         | Live event streaming             |
 | `GET`  | `/healthz`                          | Liveness probe                   |
 | `GET`  | `/readyz`                           | Readiness probe (DB ping)         |

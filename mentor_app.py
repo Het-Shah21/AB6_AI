@@ -77,6 +77,127 @@ app.add_middleware(
 # ---------------------------------------------------------------------------
 
 
+# ---------------------------------------------------------------------------
+# UI support endpoints
+# ---------------------------------------------------------------------------
+
+
+async def _add_pending(user_id: uuid.UUID, cycle_id: uuid.UUID) -> None:
+    cache = MentorSessionCache()
+    r = await cache._get_redis()  # type: ignore[attr-defined]
+    await r.sadd(f"mentor:pending:{user_id}", str(cycle_id))
+    await r.expire(f"mentor:pending:{user_id}", 86400)
+    payload = {
+        "cycle_id": str(cycle_id),
+        "queued_at": _utcnow_iso(),
+    }
+    await r.hset(
+        f"mentor:pending:detail:{cycle_id}",
+        mapping={**payload, "user_id": str(user_id)},
+    )
+    await r.expire(f"mentor:pending:detail:{cycle_id}", 86400)
+
+
+async def _remove_pending(user_id: uuid.UUID, cycle_id: uuid.UUID) -> None:
+    cache = MentorSessionCache()
+    r = await cache._get_redis()  # type: ignore[attr-defined]
+    await r.srem(f"mentor:pending:{user_id}", str(cycle_id))
+    await r.delete(f"mentor:pending:detail:{cycle_id}")
+
+
+def _utcnow_iso() -> str:
+    from datetime import datetime, timezone
+    return datetime.now(timezone.utc).isoformat()
+
+
+@app.get("/mentor/users")
+async def list_users(limit: int = 20) -> dict:
+    sess = await get_session()
+    try:
+        result = await sess.execute(
+            text(
+                """
+                SELECT id, email, full_name, organization, is_admin
+                FROM ab6_user_data.user_details
+                ORDER BY created_at DESC
+                LIMIT :limit
+                """
+            ),
+            {"limit": limit},
+        )
+        users = [
+            {
+                "id": str(r[0]),
+                "email": r[1],
+                "full_name": r[2],
+                "organization": r[3],
+                "is_admin": r[4],
+            }
+            for r in result
+        ]
+    except Exception as exc:
+        return {"users": [], "warning": f"user lookup failed: {exc}"}
+    finally:
+        await sess.close()
+    return {"users": users}
+
+
+@app.get("/mentor/pending/{user_id}")
+async def list_pending(user_id: uuid.UUID) -> dict:
+    cache = MentorSessionCache()
+    r = await cache._get_redis()  # type: ignore[attr-defined]
+    cycle_ids = await r.smembers(f"mentor:pending:{user_id}")
+    out: list[dict] = []
+    for cid in cycle_ids:
+        detail = await r.hgetall(f"mentor:pending:detail:{cid}")
+        if detail:
+            out.append(detail)
+        else:
+            out.append({"cycle_id": cid, "user_id": str(user_id)})
+    return {"pending": out}
+
+
+@app.get("/mentor/history/{user_id}")
+async def user_history(user_id: uuid.UUID, limit: int = 20) -> dict:
+    sess = await get_session()
+    try:
+        cycles = await sess.execute(
+            text(
+                """
+                SELECT cycle_id, occurred_at, event_type, challenge_id,
+                       score, is_correct, action
+                FROM ab6_learning_data.mentor_observation_log
+                WHERE user_id = :uid
+                ORDER BY occurred_at DESC
+                LIMIT :limit
+                """
+            ),
+            {"uid": str(user_id), "limit": limit},
+        )
+        rows = [
+            {
+                "cycle_id": str(r[0]) if r[0] else None,
+                "occurred_at": r[1].isoformat() if r[1] else None,
+                "event_type": r[2],
+                "challenge_id": r[3],
+                "score": float(r[4]) if r[4] is not None else None,
+                "is_correct": r[5],
+                "action": r[6],
+            }
+            for r in cycles
+        ]
+    except Exception as exc:
+        return {"cycles": [], "warning": f"history lookup failed: {exc}"}
+    finally:
+        await sess.close()
+    return {"cycles": rows}
+
+
+# ---------------------------------------------------------------------------
+# Cycle lifecycle
+# ---------------------------------------------------------------------------
+
+
 @app.post("/mentor/cycle", response_model=CycleResponse)
 async def run_cycle(request: CycleRequest) -> CycleResponse:
     if request.cycle_id is None:
@@ -106,6 +227,9 @@ async def run_cycle(request: CycleRequest) -> CycleResponse:
     graph = get_compiled_graph()
     config = {"configurable": {"thread_id": str(request.cycle_id)}}
     result = await graph.ainvoke(state, config=config)
+
+    if result.get("intervention", {}).get("requires_approval"):
+        await _add_pending(request.user_id, request.cycle_id)
 
     feedback = result.get("feedback") or {}
     intervention = result.get("intervention") or {}
@@ -151,6 +275,7 @@ async def resume_with_approval(request: ApprovalRequest) -> ApprovalResponse:
         ) from exc
 
     delivered = result.get("delivered") or {}
+    await _remove_pending(request.user_id, request.cycle_id)
     return ApprovalResponse(
         cycle_id=request.cycle_id,
         approved=request.approved,
