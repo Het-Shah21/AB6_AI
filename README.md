@@ -20,29 +20,76 @@ PRIOR INFO -> OBSERVE -> ANALYZE -> INFERENCE -> INTERPRET
                                                FEEDBACK -> END
 ```
 
-The pipeline is built with **LangGraph**, persists to **PostgreSQL**,
-streams over **WebSocket**, and is exposed via **FastAPI**.
+Built with **LangGraph**, persisted to **PostgreSQL**, streamed over
+**WebSocket**, exposed via **FastAPI**, controlled by a **Streamlit**
+UI.
 
-## Quick start
+## Two launch modes
+
+| Mode   | What it needs | Persistence | Start with |
+|--------|---------------|-------------|------------|
+| **With Docker** (production-like) | Docker Desktop, Python 3.11+ | Postgres + Redis + pgvector | `.\start-live.ps1` |
+| **Without Docker** (zero install)  | Python 3.11+ only | In-memory dict OR single SQLite file | `.\start-nodocker.ps1` |
+
+Both modes expose the same API and UI; the only difference is where
+state is stored.
+
+### With Docker (default, full stack)
 
 ```bash
-# Full live stack (Postgres + Redis + uvicorn + ARQ worker)
-.\start-live.ps1
-
-# Same plus the Streamlit UI on http://127.0.0.1:8501
-.\start-live.ps1 -WithUi
-
-# Or manually:
-docker compose up -d postgres redis
-pip install -e ".[ui]"   # adds streamlit
-alembic upgrade head
-uvicorn mentor_app:app --host 0.0.0.0 --port 8000
-streamlit run ui/streamlit_app.py
+.\start-live.ps1              # API + ARQ worker
+.\start-live.ps1 -WithUi      # API + ARQ worker + Streamlit
 ```
 
-> **First time here?** Open [`docs/README.md`](docs/README.md) — it's
-> the navigation manual for the whole codebase.  See
-> [`LEGACY.md`](LEGACY.md) for the deprecation map.
+This brings up Postgres 16 + pgvector and Redis 7 via `docker compose`,
+runs `alembic upgrade head`, and starts the API and the ARQ worker as
+background processes. UI on <http://127.0.0.1:8501>, API on
+<http://127.0.0.1:8000>.
+
+### Without Docker (no install)
+
+```bash
+.\start-nodocker.ps1                # pure in-memory, no file at all
+.\start-nodocker.ps1 -UseSqlite     # persists to mentor_data.db
+.\start-nodocker.ps1 -UseSqlite -WithUi
+```
+
+This sets `MENTOR_BACKEND=memory` (or `=sqlite`) and
+`MENTOR_SESSION_BACKEND=memory` so the mentor runs entirely in-process.
+The ARQ worker is skipped (no real Redis to subscribe to). The
+observation log, learner profile, wisdom store, and curriculum
+lookups all degrade gracefully when their tables are absent — the
+mentor still produces interventions, it just doesn't persist them
+across restarts.
+
+## Switching backends at runtime
+
+The backend is selected by two env vars (read by `src/config/settings.py`):
+
+| Env var                   | Values                  | Default    |
+|---------------------------|-------------------------|------------|
+| `MENTOR_BACKEND`          | `postgres` / `sqlite` / `memory` | `postgres` |
+| `MENTOR_SESSION_BACKEND`  | `redis` / `memory`      | `redis`    |
+| `MENTOR_DB_PATH`          | path                    | `mentor_data.db` |
+
+The matrix is:
+
+| `MENTOR_BACKEND` | `MENTOR_SESSION_BACKEND` | What runs | File / service |
+|------------------|--------------------------|-----------|----------------|
+| `postgres`       | `redis`                  | Real Postgres + Redis (Docker or native) | `docker compose` |
+| `sqlite`         | `memory`                 | aiosqlite + fakeredis | `mentor_data.db` |
+| `memory`         | `memory`                 | in-process dicts | nothing |
+| `postgres`       | `memory`                 | Postgres + in-process session | Docker Postgres only |
+
+To switch, set the env var in your shell, then launch:
+
+```bash
+# PowerShell
+$env:MENTOR_BACKEND = "memory"
+$env:MENTOR_SESSION_BACKEND = "memory"
+.\stop-live.ps1
+.\start-nodocker.ps1 -WithUi
+```
 
 ## API endpoints
 
@@ -69,21 +116,14 @@ src/
 │   ├── policies.py # action whitelist + HITL rule engine
 │   ├── state.py    # Pydantic per-stage payloads + MentorState TypedDict
 │   └── observability.py
+├── db/             # SQLAlchemy engine + SQLite + in-memory backends
 ├── llm/            # Shared multi-provider LLM abstraction
-├── db/             # Shared SQLAlchemy models, engine, repositories
 ├── config/         # Pydantic Settings + LLM config
 └── shared/         # Events, exceptions, telemetry math
 mentor_app.py       # FastAPI entry point — the primary service
+ui/                 # Streamlit control panel
 
-legacy/             # Deprecated OODA agent + YouTube agent
-├── agent/          # OODA graph and nodes
-├── youtube_agent/  # YouTube analytics
-├── api/            # OODA FastAPI routers
-├── concept_graph/  # Knowledge graph builder/queries
-├── memory/         # Legacy personal/global/session services
-├── intervention/   # Legacy Thompson selector + generators
-├── ingestion/      # Legacy Redis Streams consumer + ARQ worker
-└── youtube_app.py  # Standalone FastAPI shim
+legacy/             # Deprecated OODA + YouTube code (kept for tests)
 ```
 
 ## Testing
@@ -92,19 +132,16 @@ legacy/             # Deprecated OODA agent + YouTube agent
 pytest tests/ -v
 ```
 
-The suite covers the PII sanitizer, the policy engine, the analyze /
-feedback stages, the legacy OODA unit tests, and the mentor
-integration tests.
+## Smoke test (no LLM keys needed)
 
-## Project structure
+```bash
+# After start-nodocker.ps1
+$resp = Invoke-RestMethod -Method POST -Uri http://127.0.0.1:8000/mentor/cycle `
+       -ContentType application/json -Body (Get-Content .\sample_cycle.json -Raw)
+$resp | Format-List
+```
 
-| Path                | Description                                      |
-|---------------------|--------------------------------------------------|
-| `src/mentor/`       | Canonical 8-stage mentor package                 |
-| `legacy/`           | Deprecated OODA + YouTube code (kept for tests)  |
-| `tests/`            | Pytest suite (unit + integration)                |
-| `alembic/`          | Database migrations                              |
-| `scripts/`          | One-shot DB scripts (seed wisdom, etc.)          |
-| `docs/`             | Architecture and design notes                    |
-| `mentor_app.py`     | FastAPI entry point                              |
-| `LEGACY.md`         | What moved, what stayed, what to delete          |
+The cycle returns a chosen action, rationale, confidence, and
+delivered content even with no `OPENAI_API_KEY` set — the LLM
+provider in `src/llm/provider.py` falls back to a hard-coded
+response when all providers fail.

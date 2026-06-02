@@ -1,0 +1,54 @@
+{
+  "user_id": "00000000-0000-0000-0000-000000000001",
+  "session_id": "demo-session",
+  "events": [
+    {
+      "event_id": "evt-1",
+      "session_id": "demo-session",
+      "user_id": "00000000-0000-0000-0000-000000000001",
+      "timestamp": 1717334400,
+      "event_type": "page_view",
+      "page": "/challenge/ik-challenge-1",
+      "challenge_id": "ik-challenge-1",
+      "score": null,
+      "is_correct": null,
+      "metadata": {}
+    },
+    {
+      "event_id": "evt-2",
+      "session_id": "demo-session",
+      "user_id": "00000000-0000-0000-0000-000000000001",
+      "timestamp": 1717334430,
+      "event_type": "code_run",
+      "page": "/challenge/ik-challenge-1",
+      "challenge_id": "ik-challenge-1",
+      "score": 0.2,
+      "is_correct": false,
+      "run_no": 1,
+      "metadata": {"stderr": "TypeError: cannot unpack non-iterable NoneType object"}
+    },
+    {
+      "event_id": "evt-3",
+      "session_id": "demo-session",
+      "user_id": "00000000-0000-0000-0000-000000000001",
+      "timestamp": 1717334480,
+      "event_type": "code_run",
+      "page": "/challenge/ik-challenge-1",
+      "challenge_id": "ik-challenge-1",
+      "score": 0.25,
+      "is_correct": false,
+      "run_no": 2,
+      "metadata": {}
+    },
+    {
+      "event_id": "evt-4",
+      "session_id": "demo-session",
+      "user_id": "00000000-0000-0000-0000-000000000001",
+      "timestamp": 1717334540,
+      "event_type": "hint_request",
+      "page": "/challenge/ik-challenge-1",
+      "challenge_id": "ik-challenge-1",
+      "metadata": {}
+    }
+  ]
+}

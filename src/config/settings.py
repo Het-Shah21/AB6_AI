@@ -32,6 +32,10 @@ class Settings(BaseSettings):
     max_events_per_cycle: int = 100
     wisdom_cache_ttl: int = 300
 
+    mentor_backend: str = "postgres"
+    mentor_session_backend: str = "redis"
+    mentor_db_path: str = "mentor_data.db"
+
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 
 
