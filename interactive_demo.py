@@ -29,14 +29,14 @@ async def init_state():
     global _initialized, _agent_state
     if _initialized:
         return
-    from src.agent.graph import create_initial_state
+    from legacy.agent.graph import create_initial_state
     _agent_state = await create_initial_state("interactive-user", "interactive-session", max_cycles=3)
     _initialized = True
 
 
 async def run_agent() -> dict:
     global _agent_state
-    from src.agent.graph import build_ooda_graph
+    from legacy.agent.graph import build_ooda_graph
     graph = build_ooda_graph()
     agent = graph.compile()
     _agent_state = await agent.ainvoke(_agent_state)

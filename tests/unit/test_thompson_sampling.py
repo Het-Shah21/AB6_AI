@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from src.intervention.selector import segment_learner
+from legacy.intervention.selector import segment_learner
 from src.db.repositories.wisdom_repo import WisdomRepo
 
 

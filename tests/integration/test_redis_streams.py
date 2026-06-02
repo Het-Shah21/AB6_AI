@@ -4,7 +4,7 @@ import pytest
 
 @pytest.mark.asyncio
 async def test_event_schema_validation():
-    from src.ingestion.schemas import ObservationEventPayload
+    from legacy.ingestion.schemas import ObservationEventPayload
 
     valid = ObservationEventPayload(
         user_id="u1",
@@ -18,7 +18,7 @@ async def test_event_schema_validation():
 
 @pytest.mark.asyncio
 async def test_batch_observation_schema():
-    from src.ingestion.schemas import BatchObservationPayload, ObservationEventPayload
+    from legacy.ingestion.schemas import BatchObservationPayload, ObservationEventPayload
 
     batch = BatchObservationPayload(
         events=[

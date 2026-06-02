@@ -1,8 +1,8 @@
 import pytest
 
-from src.concept_graph.embeddings import cosine_similarity
-from src.concept_graph.builder import _deduplicate_concepts, _parse_llm_json
-from src.concept_graph.models import ConceptNode
+from legacy.concept_graph.embeddings import cosine_similarity
+from legacy.concept_graph.builder import _deduplicate_concepts, _parse_llm_json
+from legacy.concept_graph.models import ConceptNode
 
 
 def test_cosine_similarity_identical():

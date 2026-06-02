@@ -1,7 +1,7 @@
 [project]
 name = "ab6-ai-agent"
-version = "0.1.0"
-description = "AB6 Adaptive Learning AI Agent — OODA Loop Architecture"
+version = "2.0.0"
+description = "AB6 Adaptive Learning AI Agent — Unified 8-stage Mentor"
 requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.110.0",
@@ -37,6 +37,11 @@ dev = [
     "ruff>=0.3.0",
     "matplotlib>=3.8.0",
 ]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src.*", "src.mentor.*", "legacy.*"]
+exclude = ["tests*", "scripts*", "docs*"]
 
 [tool.ruff]
 target-version = "py311"

@@ -1,6 +1,6 @@
 import pytest
 
-from src.agent.nodes.decide import decide_router, _segment_learner
+from legacy.agent.nodes.decide import decide_router, _segment_learner
 
 
 def test_decide_router_pause():

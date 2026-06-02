@@ -8,7 +8,7 @@ from typing import Any
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.concept_graph.builder import build_concept_graph
+from legacy.concept_graph.builder import build_concept_graph
 from src.db.engine import get_engine, get_session
 
 logging.basicConfig(level=logging.INFO)

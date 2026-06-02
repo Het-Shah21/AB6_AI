@@ -1,29 +1,52 @@
-import pytest
+"""Tests for the PII sanitizer."""
 
-from src.llm.sanitizer import strip_pii, sanitize_observation_event
+from __future__ import annotations
 
-
-def test_strip_email():
-    assert "[EMAIL]" in strip_pii("user@example.com")
+from src.llm.sanitizer import sanitize_pii, strip_pii
 
 
-def test_strip_phone():
-    assert "[PHONE]" in strip_pii("Call 123-456-7890 now")
+def test_strip_email() -> None:
+    out = strip_pii("contact jane.doe@example.com please")
+    assert "[EMAIL]" in out
+    assert "jane.doe" not in out
 
 
-def test_strip_no_pii():
-    text = "This is a plain text about robotics kinematics."
-    assert strip_pii(text) == text
+def test_strip_phone() -> None:
+    out = strip_pii("call 415-555-1234 tomorrow")
+    assert "[PHONE]" in out
+    assert "415-555" not in out
 
 
-def test_sanitize_observation():
-    event = {
-        "user_id": "abc-123",
-        "session_id": "session-xyz",
-        "event_type": "click",
-        "metadata": {"email": "test@test.com"},
+def test_strip_card() -> None:
+    out = strip_pii("card 4111111111111111 here")
+    assert "[CARD]" in out
+
+
+def test_name_with_blocklist() -> None:
+    assert strip_pii("Inverse Kinematics is fun") == "Inverse Kinematics is fun"
+    assert strip_pii("Forward Kinematics lab") == "Forward Kinematics lab"
+
+
+def test_name_redacts_personal_name() -> None:
+    out = strip_pii("Jane Doe submitted work")
+    assert "[NAME]" in out
+    assert "Jane Doe" not in out
+
+
+def test_sanitize_pii_dict() -> None:
+    payload = {
+        "user": "jane.doe@example.com",
+        "note": "Jane Doe did 415-555-1234 today",
+        "nested": {"card": "4111111111111111"},
     }
-    safe = sanitize_observation_event(event)
-    assert "user_id" not in safe
-    assert "session_id" not in safe
-    assert "[EMAIL]" in safe["metadata"]
+    out = sanitize_pii(payload)
+    assert "[EMAIL]" in out["user"]
+    assert "[PHONE]" in out["note"]
+    assert "[CARD]" in out["nested"]["card"]
+    assert "[NAME]" in out["note"]
+
+
+def test_sanitize_pii_list() -> None:
+    out = sanitize_pii(["a@b.com", "Jane Doe"])
+    assert "[EMAIL]" in out[0]
+    assert "[NAME]" in out[1]

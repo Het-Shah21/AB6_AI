@@ -6,7 +6,7 @@ Runs a full OODA cycle with in-memory state, no external dependencies.
 import asyncio
 import json
 
-from src.agent.graph import build_ooda_graph, create_initial_state
+from legacy.agent.graph import build_ooda_graph, create_initial_state
 
 
 async def demo():

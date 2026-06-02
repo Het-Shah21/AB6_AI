@@ -4,7 +4,7 @@
 import asyncio
 import logging
 
-from src.memory.population_benchmarks import PopulationBenchmarkService
+from legacy.memory.population_benchmarks import PopulationBenchmarkService
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

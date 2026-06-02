@@ -592,7 +592,7 @@ python -m grpc_tools.protoc -I protos --python_out=src/grpc_gen \
 # src/api/grpc_server.py  (50 lines)
 import grpc
 from src.grpc_gen import ooda_pb2, ooda_pb2_grpc
-from src.agent.graph import compile_ooda_agent, create_initial_state
+from legacy.agent.graph import compile_ooda_agent, create_initial_state
 
 class OODAServicer(ooda_pb2_grpc.OODAServiceServicer):
     async def RunCycle(self, request, context):

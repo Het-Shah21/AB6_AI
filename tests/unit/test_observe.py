@@ -1,6 +1,6 @@
 import pytest
 
-from src.agent.nodes.observe import observe_node
+from legacy.agent.nodes.observe import observe_node
 
 
 @pytest.mark.asyncio

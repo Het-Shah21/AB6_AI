@@ -187,7 +187,7 @@ Get-Process -Name 'arq' -ErrorAction SilentlyContinue | Stop-Process -Force -Err
 
 $arqLog = Join-Path $LogDir 'arq.log'
 $arqProc = Start-Process -FilePath $venvPy `
-    -ArgumentList '-m','arq','src.ingestion.worker.WorkerSettings' `
+    -ArgumentList '-m','arq','legacy.ingestion.worker.WorkerSettings' `
     -WorkingDirectory $RepoRoot `
     -RedirectStandardOutput $arqLog `
     -RedirectStandardError (Join-Path $LogDir 'arq.err.log') `
@@ -195,18 +195,18 @@ $arqProc = Start-Process -FilePath $venvPy `
 Write-Ok "ARQ worker started (PID $($arqProc.Id), log: $arqLog)"
 
 # --- 8. Uvicorn API (background) ---
-Write-Step "Starting FastAPI / uvicorn (background)"
+Write-Step "Starting FastAPI / uvicorn (background) — mentor_app"
 
 Get-Process -Name 'uvicorn' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 
 $apiLog = Join-Path $LogDir 'api.log'
 $apiProc = Start-Process -FilePath $venvPy `
-    -ArgumentList '-m','uvicorn','src.api.app:app','--host','0.0.0.0','--port',$ApiPort,'--no-access-log' `
+    -ArgumentList '-m','uvicorn','mentor_app:app','--host','0.0.0.0','--port',$ApiPort,'--no-access-log' `
     -WorkingDirectory $RepoRoot `
     -RedirectStandardOutput $apiLog `
     -RedirectStandardError (Join-Path $LogDir 'api.err.log') `
     -PassThru -WindowStyle Hidden
-Write-Ok "API started (PID $($apiProc.Id), log: $apiLog)"
+Write-Ok "Mentor started (PID $($apiProc.Id), log: $apiLog)"
 
 # --- 9. Health check ---
 Write-Step "Health-checking http://127.0.0.1:${ApiPort}/health"

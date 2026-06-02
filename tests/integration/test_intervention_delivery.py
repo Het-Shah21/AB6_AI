@@ -1,7 +1,7 @@
 import pytest
 
-from src.agent.nodes.act import _build_intervention_content
-from src.intervention.effectiveness import calibrate_difficulty
+from legacy.agent.nodes.act import _build_intervention_content
+from legacy.intervention.effectiveness import calibrate_difficulty
 
 
 @pytest.mark.asyncio

@@ -507,7 +507,7 @@ Concepts live in the database; you don't add them in code. Either:
 
 - Run `scripts/seed_wisdom.py` (creates wisdom defaults).
 - Use the LLM builder:
-  `python -c "import asyncio; from src.concept_graph.builder import build_concept_graph; asyncio.run(build_concept_graph([{'title': '...'}, ...]))"`.
+  `python -c "import asyncio; from legacy.concept_graph.builder import build_concept_graph; asyncio.run(build_concept_graph([{'title': '...'}, ...]))"`.
 - Or insert directly into `ai_concepts` and `ai_concept_edges` via SQL.
 
 ### 7.4 — Add a new OODA node
@@ -532,7 +532,7 @@ secondary check.
 
 ```python
 import asyncio
-from src.agent.graph import create_initial_state, build_ooda_graph
+from legacy.agent.graph import create_initial_state, build_ooda_graph
 
 async def main():
     state = await create_initial_state(user_id="u1", session_id="s1", max_cycles=1)

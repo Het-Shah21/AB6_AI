@@ -8,7 +8,7 @@ async def test_orient_node_skipped_due_to_db():
 
 @pytest.mark.asyncio
 async def test_compute_engagement_trend():
-    from src.agent.nodes.orient import _compute_engagement_trend
+    from legacy.agent.nodes.orient import _compute_engagement_trend
 
     assert _compute_engagement_trend([]) == "stable"
     assert _compute_engagement_trend([{"score": 0.5}]) == "stable"

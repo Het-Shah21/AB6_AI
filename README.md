@@ -1,115 +1,83 @@
-# AB6 AI Agent — Adaptive Learning Engine
+# AB6 AI Mentor — Unified 8-Stage Adaptive Learning Engine
 
 ## Overview
 
-AI-powered adaptive learning agent for the AB6 Robotics Education platform.
-Uses an **OODA Loop** (Observe → Orient → Decide → Act) per learner to
-deliver invisible, personalized interventions.
+The AB6 AI Mentor is an **8-stage adaptive learning agent** for the
+AB6 Robotics Education platform. It replaces the previous OODA-loop
+agent and the standalone YouTube analytics pipeline with a single
+unified pipeline:
 
-## Quick Start
+```
+PRIOR INFO -> OBSERVE -> ANALYZE -> INFERENCE -> INTERPRET
+                                                  |
+                                                  v
+                                              INTELLIGENCE
+                                                  |
+                                                  v
+                                              INTERVENTION
+                                                  |
+                                                  v
+                                               FEEDBACK -> END
+```
+
+The pipeline is built with **LangGraph**, persists to **PostgreSQL**,
+streams over **WebSocket**, and is exposed via **FastAPI**.
+
+## Quick start
 
 ```bash
-# Start infrastructure
-docker-compose up -d
+# Full live stack (Postgres + Redis + uvicorn + ARQ worker)
+.\start-live.ps1
 
-# Install dependencies
+# Or manually:
+docker compose up -d postgres redis
 pip install -e .
-
-# Run database migrations
 alembic upgrade head
-
-# Seed initial wisdom
-python scripts/seed_wisdom.py
-
-# Start API server
-uvicorn src.api.app:app --host 0.0.0.0 --port 8000 --reload
+uvicorn mentor_app:app --host 0.0.0.0 --port 8000
 ```
 
-> **First time here?** Open [`docs/README.md`](docs/README.md) — it's the
-> navigation manual for the whole codebase and tells you exactly what to
-> read, in what order. For the visual one-page system overview, open
-> [`docs/SYSTEM_DESIGN.md`](docs/SYSTEM_DESIGN.md).
+> **First time here?** Open [`docs/README.md`](docs/README.md) — it's
+> the navigation manual for the whole codebase.  See
+> [`LEGACY.md`](LEGACY.md) for the deprecation map.
 
-## Live stack (one-shot)
+## API endpoints
 
-Want the full stack with real Postgres + Redis + ARQ + API, not the
-offline demo? Run from the repo root:
-
-```powershell
-.\start-live.ps1     # builds + starts everything, health-checks the API
-.\stop-live.ps1      # tears it back down
-```
-
-`start-live.ps1` is idempotent (safe to re-run) and supports
-`-SkipInstall`, `-SkipMigrate`, `-ApiPort`, `-WaitSeconds`. It needs
-Docker Desktop and Python 3.11+ installed; the rest is automatic.
-
-## Try it without any setup (demos work offline)
-
-The 3-way LLM fallback chain lets the demos run with **no API keys**:
-
-```bash
-python demo.py --event wrong --max-cycles 1
-python interactive_demo.py    # then open http://127.0.0.1:8001
-```
-
-You'll see three "LLM provider failed" warnings — that's expected. The
-fallback returns hardcoded text so the cycle still completes.
+| Method | Path                                | Purpose                          |
+|--------|-------------------------------------|----------------------------------|
+| `POST` | `/mentor/cycle`                     | Run a full 8-stage cycle         |
+| `POST` | `/mentor/approve`                   | Resume a paused HITL cycle       |
+| `WS`   | `/mentor/ws?user_id=<uuid>`         | Live event streaming             |
+| `GET`  | `/healthz`                          | Liveness probe                   |
+| `GET`  | `/readyz`                           | Readiness probe (DB ping)         |
 
 ## Architecture
 
-See [`docs/SYSTEM_DESIGN.md`](docs/SYSTEM_DESIGN.md) for the full system
-design (one picture, phase roster, end-to-end request trace, data-flow
-tables, critical invariants).
-
-See [`docs/architecture.md`](docs/architecture.md) for the original prose
-overview.
-
-See [`docs/EMBEDDED_SYSTEM_ARCHITECTURE.md`](docs/EMBEDDED_SYSTEM_ARCHITECTURE.md)
-for how the agent fits into a Frontend → Proxy → Backend → Middleware →
-Robot pipeline, plus robustness/scalability analysis, Go + gRPC
-compatibility, and tech-stack migration recipes.
-
-## Project Structure
-
 ```
 src/
-├── agent/          # OODA Agent (LangGraph state machine)
-├── api/            # FastAPI routers & middleware
-├── concept_graph/  # Knowledge graph extraction & query
+├── mentor/         # Canonical: 8-stage pipeline
+│   ├── stages/     # prior_info, observe, analyze, inference, interpret,
+│   │               # intelligence, intervention, feedback
+│   ├── memory/     # personal, global_wisdom, curriculum, session, observation_log
+│   ├── graph.py    # LangGraph assembly with HITL interrupt
+│   ├── policies.py # action whitelist + HITL rule engine
+│   ├── state.py    # Pydantic per-stage payloads + MentorState TypedDict
+│   └── observability.py
+├── llm/            # Shared multi-provider LLM abstraction
+├── db/             # Shared SQLAlchemy models, engine, repositories
 ├── config/         # Pydantic Settings + LLM config
-├── db/             # SQLAlchemy models & repositories
-├── ingestion/      # Redis Streams event pipeline
-├── intervention/   # Thompson Sampling selector + generators
-├── llm/            # Multi-provider LLM abstraction
-├── memory/         # Personal & Global Wisdom services
 └── shared/         # Events, exceptions, telemetry math
+mentor_app.py       # FastAPI entry point — the primary service
+
+legacy/             # Deprecated OODA agent + YouTube agent
+├── agent/          # OODA graph and nodes
+├── youtube_agent/  # YouTube analytics
+├── api/            # OODA FastAPI routers
+├── concept_graph/  # Knowledge graph builder/queries
+├── memory/         # Legacy personal/global/session services
+├── intervention/   # Legacy Thompson selector + generators
+├── ingestion/      # Legacy Redis Streams consumer + ARQ worker
+└── youtube_app.py  # Standalone FastAPI shim
 ```
-
-## API Endpoints
-
-| Prefix | Description |
-|---|---|
-| `POST /api/v1/ai/events` | Ingest observation events |
-| `WS /api/v1/ai/telemetry/ws` | Real-time telemetry |
-| `WS /api/v1/ai/interventions/{id}/ws` | Intervention delivery |
-| `POST /api/v1/ai/agent/sessions/{id}/cycle` | Run OODA cycle |
-
-Full API docs at [`docs/api.md`](docs/api.md).
-
-## Documentation Map
-
-| Document | Purpose |
-|---|---|
-| [`docs/README.md`](docs/README.md) | **Start here** — the navigation manual |
-| [`docs/SYSTEM_DESIGN.md`](docs/SYSTEM_DESIGN.md) | Master visual system design |
-| [`docs/EMBEDDED_SYSTEM_ARCHITECTURE.md`](docs/EMBEDDED_SYSTEM_ARCHITECTURE.md) | Embedded-system fit, robustness, scalability, Go/gRPC migration |
-| `docs/architecture.md` | Original prose architecture overview |
-| `docs/api.md` | API reference |
-| `docs/concept_graph.md` | Concept graph deep-dive |
-| `docs/intervention_types.md` | Intervention type catalog |
-| `docs/phase-0X-…/00-system-design.md` | Visual diagrams per phase |
-| `docs/phase-0X-…/0N-*.md` | Line-by-line prose per code file |
 
 ## Testing
 
@@ -117,6 +85,19 @@ Full API docs at [`docs/api.md`](docs/api.md).
 pytest tests/ -v
 ```
 
-21 unit tests across 5 files guard the contracts established by the 9
-phases. See [`docs/phase-09-testing-and-demo/00-system-design.md`](docs/phase-09-testing-and-demo/00-system-design.md)
-for the test pyramid and which test guards which bug.
+The suite covers the PII sanitizer, the policy engine, the analyze /
+feedback stages, the legacy OODA unit tests, and the mentor
+integration tests.
+
+## Project structure
+
+| Path                | Description                                      |
+|---------------------|--------------------------------------------------|
+| `src/mentor/`       | Canonical 8-stage mentor package                 |
+| `legacy/`           | Deprecated OODA + YouTube code (kept for tests)  |
+| `tests/`            | Pytest suite (unit + integration)                |
+| `alembic/`          | Database migrations                              |
+| `scripts/`          | One-shot DB scripts (seed wisdom, etc.)          |
+| `docs/`             | Architecture and design notes                    |
+| `mentor_app.py`     | FastAPI entry point                              |
+| `LEGACY.md`         | What moved, what stayed, what to delete          |

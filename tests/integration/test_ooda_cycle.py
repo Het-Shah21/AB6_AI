@@ -3,7 +3,7 @@ import pytest
 
 @pytest.mark.asyncio
 async def test_ooda_cycle_state_transitions():
-    from src.agent.state import OODAState
+    from legacy.agent.state import OODAState
     state = OODAState(
         user_id="test-user",
         session_id="test-session",
@@ -29,7 +29,7 @@ async def test_ooda_cycle_state_transitions():
 
 @pytest.mark.asyncio
 async def test_agent_graph_structure():
-    from src.agent.graph import build_ooda_graph
+    from legacy.agent.graph import build_ooda_graph
     graph = build_ooda_graph()
     assert graph is not None
     nodes = {n for n in graph.nodes}

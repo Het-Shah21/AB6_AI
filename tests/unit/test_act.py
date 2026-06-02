@@ -1,6 +1,6 @@
 import pytest
 
-from src.agent.nodes.act import _build_intervention_content
+from legacy.agent.nodes.act import _build_intervention_content
 
 
 def test_build_concept_explanation():
